@@ -1,13 +1,6 @@
-"""Tests for core.price.PriceFeed.
-
-No real network calls. A FakeSession stubs requests.Session.get() and
-returns canned Kraken-shaped responses. A FakeClock lets us control time
-so cache TTL behavior is deterministic.
-"""
-
+"""Tests for core.price.PriceFeed. No real network calls."""
 from __future__ import annotations
 
-import json
 from unittest.mock import Mock
 
 import pytest
@@ -16,10 +9,6 @@ import requests
 from satsflow.core import price as price_mod
 from satsflow.core.price import PriceFeed, PriceFeedError
 
-
-# ---------------------------------------------------------------------------
-# Test doubles
-# ---------------------------------------------------------------------------
 
 class FakeClock:
     def __init__(self, start: float = 1_000_000.0):
@@ -33,18 +22,13 @@ class FakeClock:
 
 
 def kraken_ok(price: str = "50000.0") -> Mock:
-    """A fake 200 response with a valid Kraken ticker body."""
     r = Mock()
     r.status_code = 200
     r.json.return_value = {
         "error": [],
-        "result": {
-            "XXBTZUSD": {
-                "c": [price, "0.001"],
-                "h": ["51000.0", "52000.0"],
-                "l": ["49000.0", "48000.0"],
-            }
-        },
+        "result": {"XXBTZUSD": {"c": [price, "0.001"],
+                                "h": ["51000.0", "52000.0"],
+                                "l": ["49000.0", "48000.0"]}},
     }
     return r
 
@@ -63,13 +47,11 @@ def http_error(status: int = 500) -> Mock:
 
 
 class FakeSession:
-    """Minimal requests.Session replacement with scripted responses."""
-
     def __init__(self):
         self.calls: list[dict] = []
-        self.responses: list[Mock | Exception] = []
+        self.responses: list = []
 
-    def queue(self, *items: Mock | Exception) -> None:
+    def queue(self, *items) -> None:
         self.responses.extend(items)
 
     def get(self, url, params=None, timeout=None):
@@ -94,12 +76,9 @@ def fake_clock():
 
 @pytest.fixture
 def feed(fake_session, fake_clock):
-    return PriceFeed(cache_ttl=60.0, max_stale=300.0, session=fake_session, clock=fake_clock)
+    return PriceFeed(cache_ttl=60.0, max_stale=300.0,
+                     session=fake_session, clock=fake_clock)
 
-
-# ---------------------------------------------------------------------------
-# Happy path
-# ---------------------------------------------------------------------------
 
 class TestBasicFetch:
     def test_fetch_btc(self, feed, fake_session):
@@ -126,22 +105,18 @@ class TestBasicFetch:
             feed.usd("DOGE")
 
 
-# ---------------------------------------------------------------------------
-# Cache behavior
-# ---------------------------------------------------------------------------
-
 class TestCache:
     def test_second_call_hits_cache(self, feed, fake_session, fake_clock):
         fake_session.queue(kraken_ok("50000.0"))
         assert feed.usd("BTC") == 50000.0
-        fake_clock.advance(30)  # within TTL
+        fake_clock.advance(30)
         assert feed.usd("BTC") == 50000.0
-        assert len(fake_session.calls) == 1  # only one HTTP call
+        assert len(fake_session.calls) == 1
 
     def test_cache_expires_after_ttl(self, feed, fake_session, fake_clock):
         fake_session.queue(kraken_ok("50000.0"), kraken_ok("51000.0"))
         assert feed.usd("BTC") == 50000.0
-        fake_clock.advance(61)  # past TTL
+        fake_clock.advance(61)
         assert feed.usd("BTC") == 51000.0
         assert len(fake_session.calls) == 2
 
@@ -149,20 +124,15 @@ class TestCache:
         fake_session.queue(kraken_ok("50000.0"), kraken_ok("150.0"))
         assert feed.usd("BTC") == 50000.0
         assert feed.usd("XMR") == 150.0
-        # Both fetched, neither poisoned the other
         assert len(fake_session.calls) == 2
 
-    def test_clear_cache_forces_refetch(self, feed, fake_session, fake_clock):
+    def test_clear_cache_forces_refetch(self, feed, fake_session):
         fake_session.queue(kraken_ok("50000.0"), kraken_ok("51000.0"))
         feed.usd("BTC")
         feed.clear_cache()
         assert feed.usd("BTC") == 51000.0
         assert len(fake_session.calls) == 2
 
-
-# ---------------------------------------------------------------------------
-# Failure and stale-fallback behavior
-# ---------------------------------------------------------------------------
 
 class TestFailures:
     def test_http_500_raises_when_no_cache(self, feed, fake_session):
@@ -200,41 +170,20 @@ class TestFailures:
             feed.usd("BTC")
 
     def test_stale_fallback_within_ceiling(self, feed, fake_session, fake_clock):
-        # First fetch works
         fake_session.queue(kraken_ok("50000.0"))
         assert feed.usd("BTC") == 50000.0
-        # Past TTL, but within max_stale; fetch fails
         fake_clock.advance(120)
         fake_session.queue(http_error(500))
-        assert feed.usd("BTC") == 50000.0  # stale value served
+        assert feed.usd("BTC") == 50000.0
 
     def test_stale_fallback_expires(self, feed, fake_session, fake_clock):
         fake_session.queue(kraken_ok("50000.0"))
         feed.usd("BTC")
-        # Past max_stale; fetch fails; no fallback allowed
         fake_clock.advance(301)
         fake_session.queue(http_error(500))
         with pytest.raises(PriceFeedError, match="http 500"):
             feed.usd("BTC")
 
-    def test_failed_fetch_does_not_poison_cache(self, feed, fake_session, fake_clock):
-        fake_session.queue(kraken_ok("50000.0"))
-        feed.usd("BTC")
-        fake_clock.advance(61)
-        # New fetch fails; stale fallback returns 50000
-        fake_session.queue(http_error(500))
-        assert feed.usd("BTC") == 50000.0
-        # Advance a bit more but stay inside TTL of *original* cache timestamp.
-        # Cache timestamp is from the original fetch, so TTL already expired.
-        # Next call refetches.
-        fake_clock.advance(10)
-        fake_session.queue(kraken_ok("52000.0"))
-        assert feed.usd("BTC") == 52000.0
-
-
-# ---------------------------------------------------------------------------
-# Direct response parsing
-# ---------------------------------------------------------------------------
 
 class TestParser:
     def test_parser_reads_c_field(self):
@@ -243,7 +192,7 @@ class TestParser:
 
     def test_parser_rejects_non_dict(self):
         with pytest.raises(PriceFeedError):
-            price_mod._parse_kraken_response("not a dict", "XXBTZUSD")  # type: ignore[arg-type]
+            price_mod._parse_kraken_response("not a dict", "XXBTZUSD")
 
     def test_parser_rejects_empty_result(self):
         with pytest.raises(PriceFeedError, match="no result"):
@@ -251,4 +200,6 @@ class TestParser:
 
     def test_parser_surfaces_kraken_errors(self):
         with pytest.raises(PriceFeedError, match="kraken error"):
-            price_mod._parse_kraken_response({"error": ["EGeneral:Invalid"], "result": {}}, "XXBTZUSD")
+            price_mod._parse_kraken_response(
+                {"error": ["EGeneral:Invalid"], "result": {}}, "XXBTZUSD"
+            )

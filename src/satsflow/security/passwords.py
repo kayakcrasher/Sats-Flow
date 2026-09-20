@@ -13,7 +13,7 @@ without its salt — argon2-cffi embeds the salt in the encoded hash string.
 from __future__ import annotations
 
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
+from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatchError
 from argon2.low_level import Type
 
 # Tuned for Termux. Desktop defaults are time_cost=3, memory_cost=65536.

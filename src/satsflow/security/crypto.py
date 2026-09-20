@@ -26,7 +26,7 @@ import base64
 import os
 from dataclasses import dataclass
 
-from argon2.low_level import hash_secret_raw, Type
+from argon2.low_level import Type, hash_secret_raw
 from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
@@ -136,14 +136,14 @@ class SecureVault:
     _salt: bytes
 
     @classmethod
-    def create(cls, password: str) -> "SecureVault":
+    def create(cls, password: str) -> SecureVault:
         """Fresh vault: generate a new salt and derive the key."""
         salt = new_salt()
         key = derive_key(password, salt)
         return cls(_key=key, _salt=salt)
 
     @classmethod
-    def unlock(cls, password: str, salt: bytes) -> "SecureVault":
+    def unlock(cls, password: str, salt: bytes) -> SecureVault:
         """Reopen an existing vault from its stored salt."""
         key = derive_key(password, salt)
         return cls(_key=key, _salt=salt)

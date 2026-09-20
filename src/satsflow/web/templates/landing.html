@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}SatsFlow — Bitcoin & Monero donations{% endblock %}
+{% block content %}
+
+<section class="hero">
+    <div class="hero-inner">
+        <div class="hero-badge">
+            <span class="dot"></span> Now in active development
+        </div>
+        <h1 class="hero-title">
+            Donations that go<br>
+            <span class="accent">straight to the creator.</span>
+        </h1>
+        <p class="hero-sub">
+            SatsFlow is a non-custodial tipping and crowdfunding platform for Bitcoin and Monero.
+            99% of every donation lands on-chain in the creator's wallet. 1% funds the platform.
+            No accounts held, no funds held, no middlemen.
+        </p>
+        <div class="hero-cta">
+            <a href="/c/kayakcrasher" class="btn btn-primary">See a live page</a>
+            <a href="https://github.com/kayakcrasher/Sats-Flow" class="btn btn-ghost">View on GitHub</a>
+        </div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="features-inner">
+        <div class="feature">
+            <div class="feature-icon">₿</div>
+            <h3>Bitcoin native</h3>
+            <p>Direct on-chain payments to fresh addresses. Watch-only xpub. No custody, no KYC, no custodial risk.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">ɱ</div>
+            <h3>Monero private</h3>
+            <p>XMR support via <code>monero-wallet-rpc</code>. View keys stay on your machine. Donor privacy by default.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <h3>Transparent fees</h3>
+            <p>99/1 split, calculated on-chain in sats. No hidden cuts. The 1% is a second output you can verify in any block explorer.</p>
+        </div>
+    </div>
+</section>
+
+<section class="how">
+    <div class="how-inner">
+        <h2>How it works</h2>
+        <ol class="steps">
+            <li>
+                <span class="step-num">1</span>
+                <div>
+                    <h4>Creator signs up</h4>
+                    <p>Pick a handle, add a BTC and/or XMR address. SatsFlow generates a public donation page.</p>
+                </div>
+            </li>
+            <li>
+                <span class="step-num">2</span>
+                <div>
+                    <h4>Donor picks an amount</h4>
+                    <p>Enter a USD target or a specific amount of BTC/XMR. A fresh address is generated per donation.</p>
+                </div>
+            </li>
+            <li>
+                <span class="step-num">3</span>
+                <div>
+                    <h4>Payment splits on-chain</h4>
+                    <p>When the donation is broadcast, the transaction has two outputs: 99% to the creator, 1% to the platform. Both are visible on-chain, forever.</p>
+                </div>
+            </li>
+            <li>
+                <span class="step-num">4</span>
+                <div>
+                    <h4>Creator sees it instantly</h4>
+                    <p>Dashboard updates as confirmations arrive. Export history as CSV for taxes.</p>
+                </div>
+            </li>
+        </ol>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="cta-inner">
+        <h2>Self-host it. Or run it for your community.</h2>
+        <p>SatsFlow is MIT licensed and designed to be forked. Run your own instance, set your own fee, keep the audit trail.</p>
+        <div class="hero-cta">
+            <a href="https://github.com/kayakcrasher/Sats-Flow" class="btn btn-primary">Get the source</a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,37 @@
+<form class="donate-card" method="post" action="#">
+    <h2>Send a donation</h2>
+    <p class="muted small">Pick a coin and amount. A fresh address is generated for this donation only.</p>
+
+    <div class="donate-toggle" role="tablist">
+        <button type="button" class="toggle-btn is-active" data-coin="BTC">Bitcoin</button>
+        <button type="button" class="toggle-btn" data-coin="XMR">Monero</button>
+    </div>
+
+    <label class="field">
+        <span class="field-label">Amount (USD)</span>
+        <input type="number" class="input" name="amount_usd" placeholder="25.00" min="1" step="0.01">
+        <span class="field-hint">≈ 0.00037 BTC at current rate · Kraken</span>
+    </label>
+
+    <label class="field">
+        <span class="field-label">Or amount (BTC)</span>
+        <input type="text" class="input" name="amount_btc" placeholder="0.00037" inputmode="decimal">
+    </label>
+
+    <label class="field">
+        <span class="field-label">Name <span class="muted">(optional — shown with your message)</span></span>
+        <input type="text" class="input" name="display_name" placeholder="Anonymous" maxlength="40">
+    </label>
+
+    <label class="field">
+        <span class="field-label">Message <span class="muted">(optional — max 280 chars)</span></span>
+        <textarea class="textarea" name="message" maxlength="280"
+                  placeholder="Great stream tonight! Keep it up 🔥"></textarea>
+        <span class="field-hint">Your message appears on the creator's dashboard and public feed.</span>
+    </label>
+
+    <button type="submit" class="btn btn-primary btn-block" disabled>
+        Generate address
+    </button>
+    <p class="muted tiny center">Address generation activates in Phase 4.</p>
+</form>

@@ -13,6 +13,11 @@ Security model:
 
 Wire format for an encrypted blob (base64 of):
     [1 byte version][12 bytes nonce][ciphertext + 16-byte GCM tag]
+
+Lock semantics:
+  - SecureVault.lock() zeroes the key bytes, then sets _key to None.
+  - None is the sentinel for "locked". Any encrypt/decrypt on a locked
+    vault raises VaultError instead of silently using a zeroed key.
 """
 
 from __future__ import annotations
@@ -114,15 +119,20 @@ class SecureVault:
     """In-memory vault holding the derived key while unlocked.
 
     Usage:
-        v = SecureVault.unlock(password, salt)
+        v = SecureVault.create(password)          # new vault, fresh salt
+        v = SecureVault.unlock(password, salt)    # reopen existing vault
         blob = v.encrypt(b"secret data")
         v.lock()
+
+    Lock semantics:
+        _key is None  -> vault is locked. Any crypto op raises VaultError.
+        _key is bytes -> vault is unlocked.
 
     Nothing is persisted by this class. Persistence (salt + blobs) is the
     caller's job — see storage/db.py.
     """
 
-    _key: bytes
+    _key: bytes | None
     _salt: bytes
 
     @classmethod
@@ -142,22 +152,38 @@ class SecureVault:
     def salt(self) -> bytes:
         return self._salt
 
+    @property
+    def locked(self) -> bool:
+        return self._key is None
+
+    def _require_key(self) -> bytes:
+        if self._key is None:
+            raise VaultError("vault is locked")
+        return self._key
+
     def encrypt(self, plaintext: bytes, aad: bytes | None = None) -> bytes:
-        return encrypt(self._key, plaintext, aad)
+        return encrypt(self._require_key(), plaintext, aad)
 
     def decrypt(self, blob: bytes, aad: bytes | None = None) -> bytes:
-        return decrypt(self._key, blob, aad)
+        return decrypt(self._require_key(), blob, aad)
 
     def encrypt_b64(self, plaintext: bytes, aad: bytes | None = None) -> str:
-        return encrypt_b64(self._key, plaintext, aad)
+        return encrypt_b64(self._require_key(), plaintext, aad)
 
     def decrypt_b64(self, blob_b64: str, aad: bytes | None = None) -> bytes:
-        return decrypt_b64(self._key, blob_b64, aad)
+        return decrypt_b64(self._require_key(), blob_b64, aad)
 
     def lock(self) -> None:
-        """Zero the key in memory. Best-effort — Python may have copies."""
-        if self._key:
+        """Zero the key bytes in memory, then drop the reference.
+
+        Sets _key to None so any subsequent crypto op raises VaultError.
+        Idempotent — calling lock() twice is safe.
+        """
+        if self._key is not None:
+            # Best-effort overwrite. Python may have copies elsewhere;
+            # this only guarantees the attribute itself is zeroed.
             self._key = b"\x00" * len(self._key)
+            self._key = None
 
     def __repr__(self) -> str:
-        return f"<SecureVault locked={'yes' if not self._key else 'no'}>"
+        return f"<SecureVault locked={'yes' if self._key is None else 'no'}>"

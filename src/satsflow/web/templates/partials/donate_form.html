@@ -1,0 +1,42 @@
+<form class="donate-card" method="post" action="#" novalidate>
+    <h2>Send a donation</h2>
+    <p class="muted small">
+        Pick a coin and amount. A fresh address is generated for this donation only.
+    </p>
+
+    <div class="donate-toggle" role="tablist" aria-label="Coin">
+        <button type="button" class="toggle-btn is-active" data-coin="BTC" role="tab" aria-selected="true">Bitcoin</button>
+        <button type="button" class="toggle-btn" data-coin="XMR" role="tab" aria-selected="false">Monero</button>
+    </div>
+
+    <label class="field">
+        <span class="field-label">Amount (USD)</span>
+        <input type="number" class="input" name="amount_usd"
+               placeholder="25.00" min="1" step="0.01" inputmode="decimal">
+        <span class="field-hint">≈ 0.00037 BTC at current rate · Kraken</span>
+    </label>
+
+    <label class="field">
+        <span class="field-label">Or amount in crypto</span>
+        <input type="text" class="input" name="amount_crypto"
+               placeholder="0.00037" inputmode="decimal">
+    </label>
+
+    <label class="field">
+        <span class="field-label">Name <span class="muted">· optional</span></span>
+        <input type="text" class="input" name="display_name"
+               placeholder="Anonymous" maxlength="40" autocomplete="off">
+        <span class="field-hint">Shown with your message on the feed.</span>
+    </label>
+
+    <label class="field">
+        <span class="field-label">Message <span class="muted">· optional, 280 chars</span></span>
+        <textarea class="textarea" name="message" maxlength="280"
+                  placeholder="Great stream tonight — keep it up!"></textarea>
+    </label>
+
+    <button type="submit" class="btn btn-primary btn-block" disabled>
+        Generate address
+    </button>
+    <p class="muted tiny center">Address generation activates in Phase 4.</p>
+</form>

@@ -1,0 +1,54 @@
+<section class="feed">
+    <div class="feed-inner">
+        <div class="feed-head">
+            <h2>Recent donations</h2>
+            <span class="muted small">{{ feed | length }} shown</span>
+        </div>
+
+        {% if feed %}
+        <ul class="feed-list">
+            {% for d in feed %}
+            <li class="feed-item">
+                <div class="feed-avatar">{{ (d.name or "?")[0] | upper }}</div>
+                <div class="feed-body">
+                    <div class="feed-header">
+                        <span class="feed-name">{{ d.name or "Anonymous" }}</span>
+                        <span class="feed-amount">
+                            {% if d.coin == "BTC" %}
+                                {{ "%.8f"|format(d.amount / 100000000) }} ₿
+                            {% else %}
+                                {{ "%.4f"|format(d.amount / 1000000000000) }} ɱ
+                            {% endif %}
+                        </span>
+                        <span class="feed-time">{{ d.age }}</span>
+                    </div>
+                    {% if d.message %}
+                    <p class="feed-message">{{ d.message }}</p>
+                    {% endif %}
+                    <div class="feed-tx">
+                        <a href="https://mempool.space/tx/{{ d.txid }}" target="_blank" rel="noopener noreferrer">
+                            {{ d.txid[:14] }}…{{ d.txid[-6:] }}
+                        </a>
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="muted small">No donations yet. Be the first.</p>
+        {% endif %}
+
+        <div class="claim">
+            <h4>Was one of these yours?</h4>
+            <p>
+                Paste your wallet address or the transaction ID to link your message.
+                No signup required — we verify on-chain.
+            </p>
+            <label class="field">
+                <input type="text" class="input" name="claim_input"
+                       placeholder="bc1q… or 64-char txid" autocomplete="off" spellcheck="false">
+            </label>
+            <button type="button" class="btn btn-ghost" disabled>Verify on-chain (Phase 4)</button>
+        </div>
+    </div>
+</section>

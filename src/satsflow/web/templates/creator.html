@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ creator.display_name }} — SatsFlow{% endblock %}
+{% block content %}
+
+<section class="creator-hero">
+    <div class="creator-inner">
+        <div class="creator-avatar">{{ creator.display_name[0] | upper }}</div>
+        <div class="creator-meta">
+            <h1>{{ creator.display_name }}</h1>
+            <p class="muted">@{{ creator.slug }}</p>
+            <p class="creator-bio">{{ creator.bio }}</p>
+        </div>
+        <div class="creator-stats">
+            <div class="stat">
+                <span class="stat-label">Donations</span>
+                <span class="stat-value">{{ creator.donation_count }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">BTC received</span>
+                <span class="stat-value">{{ "%.4f"|format(creator.received_sats / 100000000) }} ₿</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">XMR received</span>
+                <span class="stat-value">{{ "%.2f"|format(creator.received_piconero / 1000000000000) }} ɱ</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="donate">
+    <div class="donate-inner">
+        {% include "partials/donate_form.html" %}
+        <aside class="donate-aside">
+            <h3>Why it's safe</h3>
+            <ul class="check-list">
+                <li>Non-custodial — funds go straight to the creator's wallet</li>
+                <li>1% platform fee is a second output, visible on-chain</li>
+                <li>No signup required to donate</li>
+                <li>No email, no KYC, no personal data collected</li>
+            </ul>
+            <h3>For the creator</h3>
+            <ul class="check-list">
+                <li>Watch-only xpub — spend keys never leave your device</li>
+                <li>Instant dashboard updates</li>
+                <li>CSV export for accounting</li>
+            </ul>
+        </aside>
+    </div>
+</section>
+
+{% include "partials/donation_feed.html" %}
+
+{% endblock %}

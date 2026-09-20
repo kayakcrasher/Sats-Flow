@@ -1,0 +1,16 @@
+<header class="site-nav">
+    <div class="nav-inner">
+        <a href="/" class="nav-brand">
+            <img src="{{ url_for('static', path='img/logo.svg') }}" alt="" width="26" height="26">
+            <span>SatsFlow</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/" class="{% if active == 'home' %}is-active{% endif %}">Home</a>
+            <a href="/c/kayakcrasher" class="{% if active == 'creator' %}is-active{% endif %}">Demo</a>
+            <a href="/dashboard" class="{% if active == 'dashboard' %}is-active{% endif %}">Dashboard</a>
+        </nav>
+        <button class="theme-toggle" type="button" title="Theme switcher — Phase 7" disabled>
+            <span class="theme-toggle-dot"></span>
+        </button>
+    </div>
+</header>

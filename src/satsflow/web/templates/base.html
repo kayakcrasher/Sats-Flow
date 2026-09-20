@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}SatsFlow{% endblock %}</title>
+    <meta name="description" content="Self-hosted Bitcoin and Monero donation platform.">
+    <link rel="icon" href="{{ url_for('static', path='img/logo.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+    <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
+</head>
+<body>
+    {% include "partials/nav.html" %}
+    <main class="site-main">
+        {% block content %}{% endblock %}
+    </main>
+    {% include "partials/footer.html" %}
+</body>
+</html>

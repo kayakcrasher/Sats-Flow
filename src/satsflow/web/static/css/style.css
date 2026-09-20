@@ -1,44 +1,43 @@
 /* =========================================================================
    SatsFlow — design tokens
-   Theme via [data-theme]. Add new themes by overriding these vars.
    ========================================================================= */
 
 :root,
 [data-theme="dark"] {
-    --bg:          #0a0a0b;
-    --bg-elev:     #131316;
-    --bg-elev-2:   #1a1a1e;
-    --border:      #232328;
-    --border-soft: #1a1a1e;
-    --text:        #ececee;
-    --text-muted:  #8a8a92;
-    --accent:      #f7931a;
-    --accent-hover:#ffa940;
-    --accent-2:    #ff6600;
-    --success:     #22c55e;
-    --danger:      #ef4444;
-    --radius:      10px;
-    --radius-sm:   6px;
-    --radius-lg:   16px;
-    --font-sans:   ui-sans-serif, -apple-system, "Inter", system-ui, "Segoe UI", sans-serif;
-    --font-mono:   ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    --bg:           #0a0a0b;
+    --bg-elev:      #131316;
+    --bg-elev-2:    #1a1a1e;
+    --border:       #232328;
+    --border-soft:  #1a1a1e;
+    --text:         #ececee;
+    --text-muted:   #8a8a92;
+    --accent:       #f7931a;
+    --accent-hover: #ffa940;
+    --accent-2:     #ff6600;
+    --success:      #22c55e;
+    --danger:       #ef4444;
+    --radius:       10px;
+    --radius-sm:    6px;
+    --radius-lg:    16px;
+    --font-sans:    ui-sans-serif, -apple-system, "Inter", system-ui, "Segoe UI", sans-serif;
+    --font-mono:    ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
 }
 
 [data-theme="terminal"] {
-    --bg:          #000000;
-    --bg-elev:     #0a0a0a;
-    --bg-elev-2:   #0f140f;
-    --border:      #1a3a1a;
-    --border-soft: #102010;
-    --text:        #33ff33;
-    --text-muted:  #1e8a1e;
-    --accent:      #33ff33;
-    --accent-hover:#66ff66;
-    --accent-2:    #33ff33;
-    --radius:      0;
-    --radius-sm:   0;
-    --radius-lg:   0;
-    --font-sans:   var(--font-mono);
+    --bg:           #000000;
+    --bg-elev:      #0a0a0a;
+    --bg-elev-2:    #0f140f;
+    --border:       #1a3a1a;
+    --border-soft:  #102010;
+    --text:         #33ff33;
+    --text-muted:   #1e8a1e;
+    --accent:       #33ff33;
+    --accent-hover: #66ff66;
+    --accent-2:     #33ff33;
+    --radius:       0;
+    --radius-sm:    0;
+    --radius-lg:    0;
+    --font-sans:    var(--font-mono);
 }
 
 /* =========================================================================
@@ -70,9 +69,9 @@ p  { margin: 0 0 1em; }
 
 code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
 
-.muted { color: var(--text-muted); }
-.small { font-size: 0.88rem; }
-.tiny  { font-size: 0.78rem; }
+.muted  { color: var(--text-muted); }
+.small  { font-size: 0.88rem; }
+.tiny   { font-size: 0.78rem; }
 .center { text-align: center; }
 
 /* =========================================================================
@@ -229,10 +228,7 @@ code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
 .how { padding: 72px 0; border-bottom: 1px solid var(--border-soft); }
 .how-inner h2 { text-align: center; margin-bottom: 40px; }
 
-.steps {
-    list-style: none; padding: 0; margin: 0;
-    display: grid; gap: 20px;
-}
+.steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 20px; }
 .steps li {
     display: flex; gap: 16px; align-items: flex-start;
     padding: 20px;
@@ -275,8 +271,13 @@ code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
     display: flex; align-items: center; gap: 8px;
     font-weight: 600; margin-bottom: 12px;
 }
-.footer-col h4 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 12px; }
-.footer-col a, .footer-col span { display: block; padding: 4px 0; font-size: 0.9rem; color: var(--text-muted); }
+.footer-col h4 {
+    font-size: 0.82rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 12px;
+}
+.footer-col a, .footer-col span {
+    display: block; padding: 4px 0; font-size: 0.9rem; color: var(--text-muted);
+}
 .footer-col a:hover { color: var(--accent); }
 
 .footer-bottom {
@@ -305,7 +306,10 @@ code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
 .creator-bio { color: var(--text-muted); margin: 8px 0 0; max-width: 480px; }
 .creator-stats { display: flex; gap: 24px; }
 .stat { text-align: right; }
-.stat-label { display: block; font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-label {
+    display: block; font-size: 0.78rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+}
 .stat-value { font-size: 1.15rem; font-weight: 600; font-family: var(--font-mono); }
 
 /* =========================================================================
@@ -343,7 +347,171 @@ code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
 
 .field { display: block; margin-bottom: 16px; }
 .field-label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
-.input {
+.input, .textarea {
     width: 100%; padding: 12px 14px;
     background: var(--bg); border: 1px solid var(--border);
-    border-radius:
+    border-radius: var(--radius-sm);
+    color: var(--text); font-family: inherit; font-size: 0.95rem;
+    transition: border-color 0.15s ease;
+}
+.input:focus, .textarea:focus {
+    outline: none; border-color: var(--accent);
+}
+.textarea { resize: vertical; min-height: 80px; font-family: inherit; }
+.field-hint { display: block; margin-top: 6px; font-size: 0.78rem; color: var(--text-muted); }
+
+.check-list { list-style: none; padding: 0; margin: 0 0 24px; }
+.check-list li {
+    position: relative; padding: 6px 0 6px 22px;
+    font-size: 0.9rem; color: var(--text-muted);
+}
+.check-list li::before {
+    content: "✓"; position: absolute; left: 0;
+    color: var(--success); font-weight: 700;
+}
+
+/* =========================================================================
+   Donation feed (new — for messages + wallet-claimed accounts)
+   ========================================================================= */
+
+.feed {
+    padding: 0 0 64px;
+}
+.feed-inner {
+    max-width: 1100px; margin: 0 auto; padding: 0 24px;
+}
+.feed-list {
+    list-style: none; padding: 0; margin: 0;
+    display: grid; gap: 12px;
+}
+.feed-item {
+    padding: 16px 20px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 16px; align-items: flex-start;
+}
+.feed-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--bg-elev-2); color: var(--accent);
+    display: grid; place-items: center;
+    font-family: var(--font-mono); font-size: 0.85rem;
+    border: 1px solid var(--border);
+}
+.feed-body { min-width: 0; }
+.feed-header {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+.feed-name { font-weight: 600; font-size: 0.95rem; }
+.feed-amount { color: var(--accent); font-family: var(--font-mono); font-size: 0.88rem; }
+.feed-time { color: var(--text-muted); font-size: 0.8rem; margin-left: auto; }
+.feed-message { color: var(--text); margin: 0; font-size: 0.94rem; word-break: break-word; }
+.feed-tx {
+    color: var(--text-muted); font-size: 0.78rem; font-family: var(--font-mono);
+    margin-top: 6px; word-break: break-all;
+}
+.feed-tx a { color: var(--text-muted); }
+.feed-tx a:hover { color: var(--accent); }
+
+/* =========================================================================
+   Account claim box (new — wallet/txid linking)
+   ========================================================================= */
+
+.claim {
+    margin-top: 24px; padding: 20px;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+}
+.claim h4 { margin: 0 0 6px; font-size: 0.95rem; }
+.claim p { margin: 0 0 12px; font-size: 0.85rem; color: var(--text-muted); }
+
+/* =========================================================================
+   Dashboard
+   ========================================================================= */
+
+.dash-head { padding: 40px 0 24px; border-bottom: 1px solid var(--border-soft); }
+.dash-head .dash-inner {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 24px; flex-wrap: wrap;
+}
+.dash-head h1 { margin: 0 0 4px; font-size: 1.8rem; }
+.dash-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.dash-stats { padding: 32px 0; }
+.dash-stats .dash-inner {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+.stat-card {
+    padding: 20px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.stat-card .stat-label {
+    display: block; font-size: 0.78rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+}
+.stat-card .stat-value.big {
+    display: block; font-size: 1.6rem; font-weight: 700;
+    font-family: var(--font-mono);
+}
+.stat-delta { display: block; margin-top: 6px; font-size: 0.82rem; color: var(--text-muted); }
+.stat-delta.up { color: var(--success); }
+
+.dash-table { padding: 16px 0 80px; }
+.dash-table h2 { margin: 0 0 16px; }
+.table-wrap {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--bg-elev);
+}
+.table {
+    width: 100%; border-collapse: collapse;
+    font-size: 0.9rem;
+}
+.table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    font-weight: 500; font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+}
+.table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-soft);
+}
+.table tr:last-child td { border-bottom: 0; }
+
+.coin-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 0.75rem; font-family: var(--font-mono);
+    color: var(--accent);
+}
+
+/* =========================================================================
+   Responsive
+   ========================================================================= */
+
+@media (max-width: 720px) {
+    .creator-inner { grid-template-columns: 1fr; text-align: center; }
+    .creator-stats { justify-content: center; }
+    .stat { text-align: center; }
+    .donate-inner { grid-template-columns: 1fr; }
+    .footer-inner { grid-template-columns: 1fr; gap: 24px; }
+    .feed-item { grid-template-columns: auto 1fr; }
+    .feed-time { grid-column: 2; margin-left: 0; }
+    .nav-links a { padding: 8px 8px; font-size: 0.85rem; }
+    .hero { padding: 64px 0 48px; }
+}

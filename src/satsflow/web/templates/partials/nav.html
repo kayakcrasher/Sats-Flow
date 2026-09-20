@@ -1,0 +1,18 @@
+<header class="site-nav">
+    <div class="nav-inner">
+        <a href="/" class="nav-brand">
+            <img src="{{ url_for('static', path='img/logo.svg') }}" alt="" width="24" height="24">
+            <span>SatsFlow</span>
+        </a>
+        <nav class="nav-links">
+            <a href="/" class="{% if active == 'home' %}is-active{% endif %}">Home</a>
+            <a href="/c/kayakcrasher" class="{% if active == 'creator' %}is-active{% endif %}">Demo</a>
+            <a href="/dashboard" class="{% if active == 'dashboard' %}is-active{% endif %}">Dashboard</a>
+        </nav>
+        <div class="nav-actions">
+            <button class="theme-toggle" title="Theme toggle (coming soon)" disabled>
+                <span class="dot"></span>
+            </button>
+        </div>
+    </div>
+</header>

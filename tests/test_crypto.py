@@ -169,11 +169,44 @@ class TestSecureVault:
         with pytest.raises(crypto.TamperedDataError):
             v2.decrypt(blob)
 
-    def test_lock_wipes_key(self):
-        v = crypto.SecureVault.create("pw")
-        v.lock()
-        assert "locked=yes" in repr(v)
-
     def test_salt_is_stable_across_unlocks(self):
         v = crypto.SecureVault.create("pw")
         assert v.salt == crypto.SecureVault.unlock("pw", v.salt).salt
+
+    # --- lock semantics ---------------------------------------------------
+
+    def test_initially_unlocked(self):
+        v = crypto.SecureVault.create("pw")
+        assert v.locked is False
+        assert "locked=no" in repr(v)
+
+    def test_lock_wipes_key(self):
+        v = crypto.SecureVault.create("pw")
+        v.lock()
+        assert v.locked is True
+        assert "locked=yes" in repr(v)
+
+    def test_use_after_lock_raises(self):
+        v = crypto.SecureVault.create("pw")
+        v.lock()
+        with pytest.raises(crypto.VaultError):
+            v.encrypt(b"data")
+
+    def test_decrypt_after_lock_raises(self):
+        v = crypto.SecureVault.create("pw")
+        blob = v.encrypt(b"data")
+        v.lock()
+        with pytest.raises(crypto.VaultError):
+            v.decrypt(blob)
+
+    def test_double_lock_is_safe(self):
+        v = crypto.SecureVault.create("pw")
+        v.lock()
+        v.lock()  # second lock shouldn't crash
+        assert v.locked is True
+
+    def test_encrypt_b64_after_lock_raises(self):
+        v = crypto.SecureVault.create("pw")
+        v.lock()
+        with pytest.raises(crypto.VaultError):
+            v.encrypt_b64(b"data")

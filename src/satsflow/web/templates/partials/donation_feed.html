@@ -1,0 +1,40 @@
+<section class="feed">
+    <div class="feed-inner">
+        <h2>Recent donations</h2>
+        <ul class="feed-list">
+            {% for d in feed %}
+            <li class="feed-item">
+                <div class="feed-avatar">
+                    {{ (d.name or "?")[0] | upper }}
+                </div>
+                <div class="feed-body">
+                    <div class="feed-header">
+                        <span class="feed-name">{{ d.name or "Anonymous" }}</span>
+                        <span class="feed-amount">
+                            {% if d.coin == "BTC" %}{{ "%.8f"|format(d.amount / 100_000_000) }} ₿{% else %}{{ "%.4f"|format(d.amount / 1_000_000_000_000) }} ɱ{% endif %}
+                        </span>
+                        <span class="feed-time">{{ d.age }}</span>
+                    </div>
+                    {% if d.message %}
+                    <p class="feed-message">{{ d.message }}</p>
+                    {% endif %}
+                    <div class="feed-tx">
+                        <a href="https://mempool.space/tx/{{ d.txid }}" target="_blank" rel="noopener">
+                            {{ d.txid[:12] }}…{{ d.txid[-6:] }}
+                        </a>
+                    </div>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="claim">
+            <h4>Were one of these your donation?</h4>
+            <p>Paste your wallet address or transaction ID to claim it and add a message. No signup needed.</p>
+            <label class="field">
+                <input type="text" class="input" placeholder="bc1q… or txid" name="claim_input">
+            </label>
+            <button type="button" class="btn btn-ghost" disabled>Verify on-chain (Phase 4)</button>
+        </div>
+    </div>
+</section>

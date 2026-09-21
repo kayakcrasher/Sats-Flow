@@ -224,6 +224,19 @@ class Database:
         self._conn.commit()
         return self.get_donation(donation_id)
 
+    def list_donations_since(
+        self, creator_id: int, since_ts: int, limit: int = 500
+    ) -> list[Donation]:
+        """All donations for a creator newer than since_ts (Unix seconds)."""
+        rows = self._conn.execute(
+            """SELECT * FROM donations
+               WHERE creator_id = ? AND created_at >= ?
+               ORDER BY created_at DESC, id DESC
+               LIMIT ?""",
+            (creator_id, since_ts, limit),
+        ).fetchall()
+        return [self._row_to_donation(r) for r in rows]
+
     @staticmethod
     def _row_to_donation(row: sqlite3.Row) -> Donation:
         return Donation(

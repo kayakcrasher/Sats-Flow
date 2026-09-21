@@ -1,0 +1,36 @@
+{% if donations %}
+<ul class="live-list">
+    {% for d in donations %}
+    <li class="live-item {% if d.message %}has-message{% endif %}">
+        <div class="live-amount">
+            {% if d.coin == "BTC" %}
+                {{ "%.8f"|format(d.amount / 100000000) }} ₿
+            {% else %}
+                {{ "%.4f"|format(d.amount / 1000000000000) }} ɱ
+            {% endif %}
+        </div>
+        <div class="live-body-cell">
+            <div class="live-from">
+                <span class="live-name">{{ d.name or "Anonymous" }}</span>
+                <span class="live-age">{{ d.age }}</span>
+                {% if d.confirmed %}
+                <span class="live-badge is-confirmed">confirmed</span>
+                {% else %}
+                <span class="live-badge is-pending">pending</span>
+                {% endif %}
+            </div>
+            {% if d.message %}
+            <p class="live-message">{{ d.message }}</p>
+            {% endif %}
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="live-empty">
+    <p class="muted">No donations in the last 24 hours.</p>
+    <p class="muted small">
+        Share your page: <span class="mono">/c/{{ creator.slug }}</span>
+    </p>
+</div>
+{% endif %}

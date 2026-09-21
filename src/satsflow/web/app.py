@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from satsflow.storage.db import Database
 from satsflow.storage.seed import seed_demo
-from satsflow.web.routes import creator, dashboard, donate, landing
+from satsflow.web.routes import creator, dashboard, donate, landing, live
 from satsflow.web.templating import STATIC_DIR
 
 
@@ -18,8 +18,6 @@ def create_app() -> FastAPI:
         redoc_url=None,
     )
 
-    # Storage: one Database instance for the process lifetime.
-    # Routes access via request.app.state.db.
     db = Database()
     seed_demo(db)
     app.state.db = db
@@ -30,6 +28,7 @@ def create_app() -> FastAPI:
     app.include_router(creator.router)
     app.include_router(donate.router)
     app.include_router(dashboard.router)
+    app.include_router(live.router)
 
     return app
 

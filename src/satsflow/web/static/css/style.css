@@ -262,3 +262,146 @@ code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
 @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* =========================================================================
+   Live / Superchat wall
+   ========================================================================= */
+
+.live-head {
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border-soft);
+    background: radial-gradient(900px 300px at 50% 0%, var(--accent-soft), transparent 70%), var(--bg);
+}
+.live-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+.live-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+.live-title h1 {
+    margin: 0;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+}
+.live-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 12px #ef4444;
+    animation: live-pulse 1.6s ease-in-out infinite;
+    align-self: center;
+}
+@keyframes live-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+.live-stats {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+.live-stats .stat { text-align: left; }
+
+.live-body { padding: 32px 0 80px; }
+
+.live-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.live-item {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 24px;
+    align-items: flex-start;
+    padding: 20px 24px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    border-radius: var(--radius);
+    transition: border-color 0.15s ease;
+}
+.live-item.has-message {
+    border-left-color: var(--accent);
+    background: linear-gradient(90deg, var(--accent-soft), transparent 30%), var(--bg-elev);
+}
+
+.live-amount {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    padding-top: 4px;
+}
+
+.live-body-cell { min-width: 0; }
+
+.live-from {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+.live-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text);
+}
+.live-age {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+.live-badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: var(--font-mono);
+}
+.live-badge.is-confirmed {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.live-badge.is-pending {
+    background: rgba(247, 147, 26, 0.12);
+    color: var(--accent);
+    border: 1px solid rgba(247, 147, 26, 0.3);
+}
+
+.live-message {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.live-empty {
+    padding: 60px 24px;
+    text-align: center;
+    background: var(--bg-elev);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+}
+
+@media (max-width: 640px) {
+    .live-item {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 16px;
+    }
+    .live-amount { font-size: 1.2rem; }
+}

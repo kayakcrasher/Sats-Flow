@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Live — {{ creator.display_name }}{% endblock %}
+{% block content %}
+
+<section class="live-head">
+    <div class="live-inner">
+        <div class="live-title">
+            <span class="live-dot"></span>
+            <h1>{{ creator.display_name }}</h1>
+            <span class="muted small">Live donation wall · last 24h</span>
+        </div>
+        <div class="live-stats">
+            <div class="stat">
+                <span class="stat-label">Donations</span>
+                <span class="stat-value">{{ totals.count }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">With messages</span>
+                <span class="stat-value">{{ totals.with_messages }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">BTC</span>
+                <span class="stat-value">{{ "%.4f"|format(totals.btc / 100000000) }} ₿</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">XMR</span>
+                <span class="stat-value">{{ "%.2f"|format(totals.xmr / 1000000000000) }} ɱ</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="live-body">
+    <div class="live-inner">
+        <div id="live-feed"
+             hx-get="/c/{{ creator.slug }}/live/feed"
+             hx-trigger="every 10s"
+             hx-swap="innerHTML">
+            {% include "partials/live_feed.html" %}
+        </div>
+    </div>
+</section>
+
+{% endblock %}

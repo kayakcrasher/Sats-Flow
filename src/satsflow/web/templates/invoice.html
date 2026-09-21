@@ -32,13 +32,28 @@
                 </div>
             </div>
 
+            {% if qr_data_uri %}
+            <div class="field qr-block">
+                <span class="field-label">Scan with your wallet</span>
+                <img src="{{ qr_data_uri }}" alt="QR code for payment" class="qr-image">
+                {% if pay_uri %}
+                <span class="field-hint mono" style="word-break:break-all;">{{ pay_uri }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
             <div class="field">
-                <span class="field-label">Send to this address</span>
-                <div class="input mono" style="word-break: break-all; padding: 14px;">
+                <span class="field-label">Or send to this address</span>
+                <div class="input mono" id="pay-address" style="word-break: break-all; padding: 14px;">
                     {{ donation.address }}
                 </div>
+                <button type="button" class="btn btn-ghost btn-block"
+                        onclick="navigator.clipboard.writeText('{{ donation.address }}'); this.textContent='Copied ✓'; setTimeout(()=>this.textContent='Copy address', 1500);"
+                        style="margin-top:8px;">
+                    Copy address
+                </button>
                 <span class="field-hint">
-                    Copy this address into your wallet. Fresh address, generated for this invoice only.
+                    Fresh address, generated for this invoice only.
                 </span>
             </div>
 

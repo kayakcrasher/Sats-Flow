@@ -10,6 +10,7 @@ from satsflow.core.bitcoin import Bitcoin, BitcoinError
 from satsflow.core.monero import Monero, MoneroError, xmr_to_piconero
 from satsflow.core.payment_watcher import PaymentWatcher, WatchError
 from satsflow.storage.db import Database, NotFoundError
+from satsflow.web.qr import btc_uri, qr_svg_data_uri, xmr_uri
 from satsflow.web.templating import templates
 
 router = APIRouter(prefix="/c")
@@ -109,6 +110,19 @@ async def show_invoice(
     if donation.creator_id != creator.id:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
+    # Build a payment URI + QR code for wallets that scan.
+    qr_data_uri = None
+    pay_uri = None
+    if donation.address:
+        if donation.coin == "BTC":
+            pay_uri = btc_uri(donation.address, donation.amount)
+        else:
+            pay_uri = xmr_uri(donation.address, donation.amount)
+        try:
+            qr_data_uri = qr_svg_data_uri(pay_uri)
+        except (ValueError, TypeError):
+            qr_data_uri = None
+
     return templates.TemplateResponse(
         request=request,
         name="invoice.html",
@@ -126,6 +140,8 @@ async def show_invoice(
                 "donor_name": donation.donor_name,
                 "message": donation.message,
             },
+            "qr_data_uri": qr_data_uri,
+            "pay_uri": pay_uri,
             "active": "creator",
         },
     )

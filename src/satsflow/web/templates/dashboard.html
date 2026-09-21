@@ -1,15 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — SatsFlow{% endblock %}
+{% block title %}Dashboard — {{ creator.display_name }}{% endblock %}
 {% block content %}
 
 <section class="dash-head">
     <div class="dash-inner">
         <div>
-            <h1>Dashboard</h1>
-            <p class="muted small">Mock data — real wiring lands in Phase 6.</p>
+            <h1>Welcome, {{ creator.display_name }}</h1>
+            <p class="muted small">Your donations, messages, and totals.</p>
         </div>
         <div class="dash-actions">
-            <a href="/c/kayakcrasher" class="btn btn-ghost">View public page</a>
+            <a href="/c/{{ creator.slug }}" class="btn btn-ghost">View public page</a>
+            <a href="/c/{{ creator.slug }}/live" class="btn btn-ghost">Live wall</a>
             <a href="/dashboard/export.csv" class="btn btn-ghost">Export CSV</a>
             <button class="btn btn-primary" disabled>Withdraw</button>
         </div>
@@ -20,23 +21,23 @@
     <div class="dash-inner">
         <div class="stat-card">
             <span class="stat-label">Total received (BTC)</span>
-            <span class="stat-value big">0.0128 ₿</span>
-            <span class="stat-delta up">+2.4% this week</span>
+            <span class="stat-value big">{{ "%.8f"|format(totals.btc / 100000000) }} ₿</span>
+            <span class="stat-delta">all-time</span>
         </div>
         <div class="stat-card">
             <span class="stat-label">Total received (XMR)</span>
-            <span class="stat-value big">0.41 ɱ</span>
-            <span class="stat-delta up">+0.8% this week</span>
+            <span class="stat-value big">{{ "%.4f"|format(totals.xmr / 1000000000000) }} ɱ</span>
+            <span class="stat-delta">all-time</span>
         </div>
         <div class="stat-card">
             <span class="stat-label">Donations</span>
-            <span class="stat-value big">47</span>
-            <span class="stat-delta">since inception</span>
+            <span class="stat-value big">{{ totals.count }}</span>
+            <span class="stat-delta">shown below</span>
         </div>
         <div class="stat-card">
-            <span class="stat-label">Unread messages</span>
-            <span class="stat-value big">6</span>
-            <span class="stat-delta">from recent donations</span>
+            <span class="stat-label">With messages</span>
+            <span class="stat-value big">{{ totals.unread }}</span>
+            <span class="stat-delta">donor notes</span>
         </div>
     </div>
 </section>
@@ -44,6 +45,7 @@
 <section class="dash-table">
     <div class="dash-inner">
         <h2>Recent donations</h2>
+        {% if donations %}
         <div class="table-wrap">
             <table class="table">
                 <thead>
@@ -69,7 +71,7 @@
                             {% endif %}
                         </td>
                         <td><span class="coin-pill">{{ d.coin }}</span></td>
-                        <td class="num mono">{{ "{:,}".format(d.amount_sats) }} sats</td>
+                        <td class="num mono">{{ "{:,}".format(d.amount_sats) }}</td>
                         <td class="num mono">${{ "%.2f"|format(d.usd) }}</td>
                         <td class="muted small">{{ d.age }}</td>
                         <td class="mono tiny">
@@ -82,6 +84,14 @@
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div class="dash-empty">
+            <p class="muted">No donations yet.</p>
+            <p class="muted small">
+                Share your page: <span class="mono">/c/{{ creator.slug }}</span>
+            </p>
+        </div>
+        {% endif %}
     </div>
 </section>
 

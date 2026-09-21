@@ -472,3 +472,24 @@ code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
     font-weight: 600;
 }
 .nav-links .nav-cta:hover { background: var(--accent-hover); color: #0a0a0b; }
+
+.dash-empty {
+    padding: 60px 24px;
+    text-align: center;
+    background: var(--bg-elev);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+}
+
+/* QR block on invoice */
+.qr-block { text-align: center; }
+.qr-image {
+    display: block;
+    width: min(280px, 100%);
+    height: auto;
+    margin: 12px auto;
+    padding: 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}

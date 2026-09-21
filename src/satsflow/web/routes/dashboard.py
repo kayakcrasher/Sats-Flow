@@ -1,4 +1,4 @@
-"""Creator dashboard route. Auth comes later."""
+"""Creator dashboard route — shows the logged-in creator's data."""
 from __future__ import annotations
 
 import csv
@@ -7,11 +7,11 @@ import time
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 
-from satsflow.storage.db import Database, NotFoundError
-from satsflow.storage.models import Donation
-from satsflow.storage.seed import DEMO_SLUG
+from satsflow.storage.db import Database
+from satsflow.storage.models import Creator, Donation
+from satsflow.web.auth_helpers import current_creator
 from satsflow.web.templating import templates
 
 router = APIRouter()
@@ -40,36 +40,38 @@ def _donation_row(d: Donation) -> dict:
     }
 
 
-def _load_donations(db: Database, limit: int = 50) -> tuple[list[Donation], dict]:
-    try:
-        creator = db.get_creator_by_slug(DEMO_SLUG)
-    except NotFoundError:
-        return [], {"btc": 0, "xmr": 0, "count": 0, "unread": 0}
-
+def _load(db: Database, creator: Creator) -> tuple[list[Donation], dict]:
     if creator.id is None:
         return [], {"btc": 0, "xmr": 0, "count": 0, "unread": 0}
-
-    donations = db.list_donations(creator.id, limit=limit)
+    donations = db.list_donations(creator.id, limit=50)
     btc_sats = sum(d.amount for d in donations if d.coin == "BTC")
     xmr_pico = sum(d.amount for d in donations if d.coin == "XMR")
     unread = sum(1 for d in donations if d.message)
-    totals = {
+    return donations, {
         "btc": btc_sats,
         "xmr": xmr_pico,
         "count": len(donations),
         "unread": unread,
     }
-    return donations, totals
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request) -> HTMLResponse:
+async def dashboard(request: Request):
+    creator = current_creator(request)
+    if creator is None:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
     db: Database = request.app.state.db
-    donations, totals = _load_donations(db)
+    donations, totals = _load(db, creator)
+
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
         context={
+            "creator": {
+                "slug": creator.slug,
+                "display_name": creator.display_name,
+            },
             "donations": [_donation_row(d) for d in donations],
             "totals": totals,
             "active": "dashboard",
@@ -78,19 +80,18 @@ async def dashboard(request: Request) -> HTMLResponse:
 
 
 @router.get("/dashboard/export.csv")
-async def export_csv(request: Request) -> StreamingResponse:
-    """Stream all donations for the demo creator as a CSV download."""
+async def export_csv(request: Request):
+    """Stream the logged-in creator's donations as a CSV download."""
+    creator = current_creator(request)
+    if creator is None:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
     db: Database = request.app.state.db
 
-    try:
-        creator = db.get_creator_by_slug(DEMO_SLUG)
-    except NotFoundError:
+    if creator.id is None:
         donations: list[Donation] = []
     else:
-        if creator.id is None:
-            donations = []
-        else:
-            donations = db.list_donations(creator.id, limit=10_000)
+        donations = db.list_donations(creator.id, limit=10_000)
 
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -115,7 +116,7 @@ async def export_csv(request: Request) -> StreamingResponse:
         ])
 
     buf.seek(0)
-    filename = f"satsflow-donations-{datetime.now(UTC):%Y%m%d}.csv"
+    filename = f"satsflow-{creator.slug}-{datetime.now(UTC):%Y%m%d}.csv"
     return StreamingResponse(
         iter([buf.getvalue()]),
         media_type="text/csv",

@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from satsflow.core.payment_watcher import PaymentWatcher
 from satsflow.storage.db import Database
 from satsflow.storage.seed import seed_demo
-from satsflow.web.routes import auth, creator, dashboard, donate, landing, live
+from satsflow.web.routes import auth, creator, dashboard, donate, landing, live, price
 from satsflow.web.templating import STATIC_DIR
 
 
@@ -32,6 +32,7 @@ def create_app() -> FastAPI:
     app.include_router(donate.router)
     app.include_router(dashboard.router)
     app.include_router(live.router)
+    app.include_router(price.router)
 
     return app
 

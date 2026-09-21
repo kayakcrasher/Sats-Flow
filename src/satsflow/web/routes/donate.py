@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from satsflow.core.bitcoin import Bitcoin, BitcoinError
 from satsflow.core.monero import Monero, MoneroError, xmr_to_piconero
+from satsflow.core.payment_watcher import PaymentWatcher, WatchError
 from satsflow.storage.db import Database, NotFoundError
 from satsflow.web.templating import templates
 
@@ -128,3 +129,36 @@ async def show_invoice(
             "active": "creator",
         },
     )
+
+@router.get("/{slug}/invoice/{donation_id}/status")
+async def invoice_status(
+    request: Request,
+    slug: str,
+    donation_id: int,
+) -> dict:
+    """Return the current payment status as JSON. Called by the invoice page."""
+    db: Database = request.app.state.db
+
+    try:
+        creator = db.get_creator_by_slug(slug)
+        donation = db.get_donation(donation_id)
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Invoice not found") from None
+
+    if donation.creator_id != creator.id:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+
+    watcher: PaymentWatcher = request.app.state.watcher
+    try:
+        result = watcher.check(donation_id)
+    except WatchError as exc:
+        return {"status": "error", "error": str(exc)}
+
+    return {
+        "status": result.status,
+        "received": result.received,
+        "expected": result.expected,
+        "confirmations": result.confirmations,
+        "txid": result.txid,
+        "is_final": result.is_final,
+    }

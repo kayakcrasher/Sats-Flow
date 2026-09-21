@@ -4,6 +4,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from satsflow.core.payment_watcher import PaymentWatcher
 from satsflow.storage.db import Database
 from satsflow.storage.seed import seed_demo
 from satsflow.web.routes import creator, dashboard, donate, landing, live
@@ -21,6 +22,7 @@ def create_app() -> FastAPI:
     db = Database()
     seed_demo(db)
     app.state.db = db
+    app.state.watcher = PaymentWatcher(db)
 
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 

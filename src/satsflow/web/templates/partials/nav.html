@@ -7,10 +7,12 @@
         </a>
         <nav class="nav-links">
             <a href="/" class="{% if active == 'home' %}is-active{% endif %}">Home</a>
+            <a href="/explore" class="{% if active == 'explore' %}is-active{% endif %}">Explore</a>
             <a href="/c/kayakcrasher" class="{% if active == 'creator' %}is-active{% endif %}">Demo</a>
             <a href="/c/kayakcrasher/live">Live</a>
             <a href="/dashboard" class="{% if active == 'dashboard' %}is-active{% endif %}">Dashboard</a>
             {% if me %}
+            <a href="/settings" class="{% if active == 'settings' %}is-active{% endif %}">Settings</a>
             <form method="post" action="/auth/logout" style="display:inline;">
                 <button type="submit" class="nav-link-btn">Log out</button>
             </form>

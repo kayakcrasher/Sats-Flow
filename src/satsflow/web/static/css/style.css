@@ -556,3 +556,83 @@ code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
     .live-item { grid-template-columns: 1fr auto; }
     .live-actions { flex-direction: row; }
 }
+
+/* Explore */
+.explore-head {
+    padding: 48px 0 24px;
+    border-bottom: 1px solid var(--border-soft);
+}
+.explore-head h1 { margin: 0 0 4px; }
+.explore-body { padding: 32px 0 80px; }
+.explore-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+.explore-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+.explore-card {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    transition: all 0.15s ease;
+}
+.explore-card:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    transform: translateY(-2px);
+}
+.explore-avatar {
+    width: 48px; height: 48px; flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--accent); color: #0a0a0b;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 1.2rem;
+    font-family: var(--font-mono);
+}
+.explore-info { min-width: 0; flex: 1; }
+.explore-info h3 { margin: 0 0 2px; font-size: 1.05rem; }
+.explore-info .mono { margin: 0 0 8px; }
+.explore-bio {
+    margin: 0 0 10px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.explore-meta {
+    display: flex; gap: 10px; align-items: center;
+    font-size: 0.82rem; color: var(--text-muted);
+    flex-wrap: wrap;
+}
+.explore-empty {
+    padding: 60px 24px;
+    text-align: center;
+    background: var(--bg-elev);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+}
+
+.settings-card {
+    max-width: 560px;
+    padding: 24px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+}
+.flash-success {
+    padding: 12px 14px;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    border-radius: var(--radius-sm);
+    color: var(--success);
+    font-size: 0.9rem;
+}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Explore creators — SatsFlow{% endblock %}
+{% block content %}
+
+<section class="explore-head">
+    <div class="explore-inner">
+        <h1>Explore creators</h1>
+        <p class="muted">Everyone taking donations on this SatsFlow instance.</p>
+    </div>
+</section>
+
+<section class="explore-body">
+    <div class="explore-inner">
+        {% if creators %}
+        <div class="explore-grid">
+            {% for c in creators %}
+            <a href="/c/{{ c.slug }}" class="explore-card">
+                <div class="explore-avatar">{{ c.display_name[0] | upper }}</div>
+                <div class="explore-info">
+                    <h3>{{ c.display_name }}</h3>
+                    <p class="mono tiny muted">@{{ c.slug }}</p>
+                    {% if c.bio %}<p class="explore-bio">{{ c.bio }}</p>{% endif %}
+                    <div class="explore-meta">
+                        <span>{{ c.donation_count }} donation{{ '' if c.donation_count == 1 else 's' }}</span>
+                        {% if c.has_btc %}<span class="coin-pill">BTC</span>{% endif %}
+                        {% if c.has_xmr %}<span class="coin-pill">XMR</span>{% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="explore-empty">
+            <p class="muted">No creators yet.</p>
+            <a href="/auth/signup" class="btn btn-primary">Be the first</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}

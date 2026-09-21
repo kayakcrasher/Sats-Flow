@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Settings — {{ creator.display_name }}{% endblock %}
+{% block content %}
+
+<section class="dash-head">
+    <div class="dash-inner">
+        <div>
+            <h1>Settings</h1>
+            <p class="muted small">Profile and security for @{{ creator.slug }}</p>
+        </div>
+        <div class="dash-actions">
+            <a href="/c/{{ creator.slug }}" class="btn btn-ghost">View page</a>
+            <a href="/dashboard" class="btn btn-ghost">Dashboard</a>
+        </div>
+    </div>
+</section>
+
+<section class="dash-stats">
+    <div class="dash-inner" style="display:block;">
+        {% if error %}
+        <div class="auth-error" style="margin-bottom:24px;">{{ error }}</div>
+        {% endif %}
+        {% if request.query_params.get('changed') %}
+        <div class="flash-success" style="margin-bottom:24px;">Password updated.</div>
+        {% endif %}
+
+        <h2>Profile</h2>
+        <form method="post" action="/settings/profile" class="settings-card">
+            <label class="field">
+                <span class="field-label">Display name</span>
+                <input type="text" class="input" name="display_name"
+                       value="{{ creator.display_name }}" maxlength="80" required>
+            </label>
+            <label class="field">
+                <span class="field-label">Bio</span>
+                <textarea class="textarea" name="bio" maxlength="280">{{ creator.bio }}</textarea>
+            </label>
+            <label class="field">
+                <span class="field-label">Bitcoin address</span>
+                <input type="text" class="input" name="btc_address" value="{{ creator.btc_address }}"
+                       placeholder="bc1q..." autocomplete="off">
+            </label>
+            <label class="field">
+                <span class="field-label">Monero address</span>
+                <input type="text" class="input" name="xmr_address" value="{{ creator.xmr_address }}"
+                       placeholder="4..." autocomplete="off">
+            </label>
+            <button type="submit" class="btn btn-primary">Save profile</button>
+        </form>
+
+        <h2 style="margin-top:40px;">Change password</h2>
+        <form method="post" action="/settings/password" class="settings-card">
+            <label class="field">
+                <span class="field-label">Current password</span>
+                <input type="password" class="input" name="current_password" required>
+            </label>
+            <label class="field">
+                <span class="field-label">New password</span>
+                <input type="password" class="input" name="new_password" required minlength="8">
+                <span class="field-hint">Minimum 8 characters.</span>
+            </label>
+            <button type="submit" class="btn btn-primary">Update password</button>
+        </form>
+    </div>
+</section>
+
+{% endblock %}

@@ -424,3 +424,51 @@ code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
     background: rgba(239, 68, 68, 0.06);
 }
 .claim.is-warn h4 { color: #ef4444; }
+
+/* Auth forms */
+.auth-wrap {
+    min-height: calc(100vh - 220px);
+    display: grid;
+    place-items: center;
+    padding: 60px 24px;
+    background: radial-gradient(900px 400px at 50% 0%, var(--accent-soft), transparent 70%), var(--bg);
+}
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 32px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.auth-card h1 { margin-bottom: 6px; font-size: 1.6rem; }
+.auth-card > p.muted { margin-bottom: 24px; }
+.auth-error {
+    padding: 12px 14px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: var(--radius-sm);
+    color: #ef4444;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.nav-link-btn {
+    background: transparent;
+    border: 0;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.nav-link-btn:hover { color: var(--text); background: var(--bg-elev); }
+.nav-links .nav-cta {
+    background: var(--accent);
+    color: #0a0a0b;
+    font-weight: 600;
+}
+.nav-links .nav-cta:hover { background: var(--accent-hover); color: #0a0a0b; }

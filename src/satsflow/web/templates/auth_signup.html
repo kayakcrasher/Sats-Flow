@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Sign up — SatsFlow{% endblock %}
+{% block content %}
+
+<section class="auth-wrap">
+    <div class="auth-card">
+        <h1>Create your page</h1>
+        <p class="muted small">Get a public donation page in 30 seconds. No email required.</p>
+
+        {% if error %}
+        <div class="auth-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/auth/signup">
+            <label class="field">
+                <span class="field-label">Handle</span>
+                <input type="text" class="input" name="slug" placeholder="yourname"
+                       pattern="[a-z0-9][a-z0-9_-]{1,30}[a-z0-9]" required>
+                <span class="field-hint">Your page will be at /c/<em>yourname</em>. Lowercase, 3-32 chars.</span>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Display name</span>
+                <input type="text" class="input" name="display_name" placeholder="Your Name" required maxlength="80">
+            </label>
+
+            <label class="field">
+                <span class="field-label">Bio <span class="muted">· optional</span></span>
+                <textarea class="textarea" name="bio" maxlength="280"
+                          placeholder="What are you raising funds for?"></textarea>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Password</span>
+                <input type="password" class="input" name="password" required minlength="8">
+                <span class="field-hint">Minimum 8 characters. Hashed with Argon2id before storage.</span>
+            </label>
+
+            <label class="field">
+                <span class="field-label">Bitcoin address <span class="muted">· optional</span></span>
+                <input type="text" class="input" name="btc_address" placeholder="bc1q..." autocomplete="off">
+            </label>
+
+            <label class="field">
+                <span class="field-label">Monero address <span class="muted">· optional</span></span>
+                <input type="text" class="input" name="xmr_address" placeholder="4..." autocomplete="off">
+            </label>
+
+            <button type="submit" class="btn btn-primary btn-block">Create my page</button>
+        </form>
+
+        <p class="muted small center" style="margin-top: 16px;">
+            Already have an account? <a href="/auth/login">Log in</a>
+        </p>
+    </div>
+</section>
+
+{% endblock %}

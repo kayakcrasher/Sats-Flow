@@ -24,7 +24,8 @@ XMR_WALLET_RPC = os.getenv("SATFLOW_XMR_WALLET_RPC", "")
 XMR_NODE_RPC = os.getenv("SATFLOW_XMR_NODE_RPC", "")
 
 # --- Storage ---
-DB_PATH = Path(os.getenv("SATFLOW_DB_PATH", "./data/satsflow.db"))
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+DB_PATH = Path(os.getenv("SATFLOW_DB_PATH", str(_PROJECT_ROOT / "data" / "satsflow.db")))
 
 # --- Session ---
 SESSION_TIMEOUT = int(os.getenv("SATFLOW_SESSION_TIMEOUT", "900"))

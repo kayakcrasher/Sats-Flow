@@ -61,6 +61,17 @@ CREATE TABLE IF NOT EXISTS claims (
     claimed_at      INTEGER NOT NULL,
     FOREIGN KEY (donation_id) REFERENCES donations(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS sessions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    token           TEXT NOT NULL UNIQUE,
+    creator_id      INTEGER NOT NULL,
+    created_at      INTEGER NOT NULL,
+    expires_at      INTEGER NOT NULL,
+    FOREIGN KEY (creator_id) REFERENCES creators(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 """
 
 
@@ -291,3 +302,47 @@ class Database:
             token=row["token"],
             claimed_at=row["claimed_at"],
         )
+
+    # --- Sessions -----------------------------------------------------------
+
+    def create_session(
+        self, creator_id: int, token: str, ttl_seconds: int = 30 * 24 * 3600
+    ) -> int:
+        """Create a session row. Returns the session id."""
+        now = _now()
+        cur = self._conn.execute(
+            """INSERT INTO sessions (token, creator_id, created_at, expires_at)
+               VALUES (?, ?, ?, ?)""",
+            (token, creator_id, now, now + ttl_seconds),
+        )
+        self._conn.commit()
+        if cur.lastrowid is None:
+            raise StorageError("insert did not return a rowid")
+        return int(cur.lastrowid)
+
+    def get_session_creator(self, token: str) -> Creator | None:
+        """Return the creator for a live session, or None if expired/unknown."""
+        row = self._conn.execute(
+            "SELECT * FROM sessions WHERE token = ?", (token,)
+        ).fetchone()
+        if row is None:
+            return None
+        if row["expires_at"] < _now():
+            self.delete_session(token)
+            return None
+        try:
+            return self.get_creator(int(row["creator_id"]))
+        except NotFoundError:
+            return None
+
+    def delete_session(self, token: str) -> None:
+        self._conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
+        self._conn.commit()
+
+    def purge_expired_sessions(self) -> int:
+        """Delete expired sessions. Returns how many were removed."""
+        cur = self._conn.execute(
+            "DELETE FROM sessions WHERE expires_at < ?", (_now(),)
+        )
+        self._conn.commit()
+        return cur.rowcount or 0

@@ -13,7 +13,6 @@ from satsflow.core.bitcoin_backends.base import (
 )
 from satsflow.core.bitcoin_backends.public_api import PublicAPIBackend
 
-
 # ---------------------------------------------------------------------------
 # split_fee
 # ---------------------------------------------------------------------------

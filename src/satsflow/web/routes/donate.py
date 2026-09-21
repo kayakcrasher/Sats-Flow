@@ -52,7 +52,7 @@ async def create_invoice(
     try:
         if amount_crypto.strip():
             if coin == "BTC":
-                amount_int = int(round(float(amount_crypto) * 100_000_000))
+                amount_int = round(float(amount_crypto) * 100_000_000)
             else:
                 amount_int = xmr_to_piconero(float(amount_crypto))
         elif amount_usd.strip():

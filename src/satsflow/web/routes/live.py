@@ -50,6 +50,9 @@ def _load(db: Database, slug: str) -> tuple[dict, list[dict], dict]:
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Creator not found") from None
 
+    if creator.id is None:
+        raise HTTPException(status_code=500, detail="creator id missing")
+
     since = int(time.time()) - WINDOW_SECONDS
     donations = db.list_donations_since(creator.id, since, limit=500)
 

@@ -46,6 +46,9 @@ def _load_donations(db: Database, limit: int = 50) -> tuple[list[Donation], dict
     except NotFoundError:
         return [], {"btc": 0, "xmr": 0, "count": 0, "unread": 0}
 
+    if creator.id is None:
+        return [], {"btc": 0, "xmr": 0, "count": 0, "unread": 0}
+
     donations = db.list_donations(creator.id, limit=limit)
     btc_sats = sum(d.amount for d in donations if d.coin == "BTC")
     xmr_pico = sum(d.amount for d in donations if d.coin == "XMR")
@@ -84,7 +87,10 @@ async def export_csv(request: Request) -> StreamingResponse:
     except NotFoundError:
         donations: list[Donation] = []
     else:
-        donations = db.list_donations(creator.id, limit=10_000)
+        if creator.id is None:
+            donations = []
+        else:
+            donations = db.list_donations(creator.id, limit=10_000)
 
     buf = io.StringIO()
     writer = csv.writer(buf)

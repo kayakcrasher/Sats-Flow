@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import Any
 
 import requests
 
@@ -166,7 +167,12 @@ class RemoteNodeBackend(MoneroBackend):
     # --- JSON-RPC -----------------------------------------------------------
 
     def _rpc(self, method: str, params: dict) -> dict:
-        payload = {"jsonrpc": "2.0", "id": "0", "method": method, "params": params}
+        payload: dict[str, Any] = {
+            "jsonrpc": "2.0",
+            "id": "0",
+            "method": method,
+            "params": params,
+        }
         try:
             resp = self._session.post(self._url, json=payload, timeout=REQUEST_TIMEOUT)
         except requests.RequestException as exc:

@@ -45,6 +45,8 @@ CREATE TABLE IF NOT EXISTS donations (
     message         TEXT,
     created_at      INTEGER NOT NULL,
     confirmed_at    INTEGER,
+    pinned          INTEGER NOT NULL DEFAULT 0,
+    read_at         INTEGER,
     FOREIGN KEY (creator_id) REFERENCES creators(id) ON DELETE CASCADE
 );
 
@@ -75,6 +77,22 @@ CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 """
 
 
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns that may be missing on older databases."""
+    cur = conn.execute("PRAGMA table_info(donations)")
+    cols = {row[1] for row in cur.fetchall()}
+    if "pinned" not in cols:
+        conn.execute("ALTER TABLE donations ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0")
+    if "read_at" not in cols:
+        conn.execute("ALTER TABLE donations ADD COLUMN read_at INTEGER")
+    # Index depends on the columns above being present.
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_donations_pinned "
+        "ON donations(creator_id, pinned DESC, created_at DESC)"
+    )
+    conn.commit()
+
+
 class StorageError(Exception):
     """Base for storage failures."""
 
@@ -101,6 +119,7 @@ class Database:
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA foreign_keys = ON")
         self._conn.executescript(SCHEMA)
+        _migrate(self._conn)
         self._conn.commit()
 
     # --- Lifecycle ----------------------------------------------------------
@@ -262,6 +281,8 @@ class Database:
             message=row["message"],
             created_at=row["created_at"],
             confirmed_at=row["confirmed_at"],
+            pinned=bool(row["pinned"]),
+            read_at=row["read_at"],
         )
 
     # --- Claims -------------------------------------------------------------
@@ -346,3 +367,43 @@ class Database:
         )
         self._conn.commit()
         return cur.rowcount or 0
+
+    def list_donations_since_filtered(
+        self,
+        creator_id: int,
+        since_ts: int,
+        min_amount: int = 0,
+        limit: int = 500,
+    ) -> list[Donation]:
+        """Same as list_donations_since, but only donations >= min_amount."""
+        rows = self._conn.execute(
+            """SELECT * FROM donations
+               WHERE creator_id = ? AND created_at >= ? AND amount >= ?
+               ORDER BY pinned DESC, created_at DESC, id DESC
+               LIMIT ?""",
+            (creator_id, since_ts, min_amount, limit),
+        ).fetchall()
+        return [self._row_to_donation(r) for r in rows]
+
+    def set_pinned(self, donation_id: int, pinned: bool) -> Donation:
+        self._conn.execute(
+            "UPDATE donations SET pinned = ? WHERE id = ?",
+            (1 if pinned else 0, donation_id),
+        )
+        self._conn.commit()
+        return self.get_donation(donation_id)
+
+    def mark_read(self, donation_id: int) -> Donation:
+        self._conn.execute(
+            "UPDATE donations SET read_at = ? WHERE id = ? AND read_at IS NULL",
+            (_now(), donation_id),
+        )
+        self._conn.commit()
+        return self.get_donation(donation_id)
+
+    def count_unread(self, creator_id: int) -> int:
+        row = self._conn.execute(
+            "SELECT COUNT(*) AS n FROM donations WHERE creator_id = ? AND read_at IS NULL",
+            (creator_id,),
+        ).fetchone()
+        return int(row["n"]) if row else 0

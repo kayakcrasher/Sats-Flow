@@ -1,7 +1,7 @@
 {% if donations %}
 <ul class="live-list">
     {% for d in donations %}
-    <li class="live-item {% if d.message %}has-message{% endif %}">
+    <li class="live-item {% if d.message %}has-message{% endif %} {% if d.pinned %}is-pinned{% endif %} {% if not d.read %}is-unread{% endif %}">
         <div class="live-amount">
             {% if d.coin == "BTC" %}
                 {{ "%.8f"|format(d.amount / 100000000) }} ₿
@@ -13,6 +13,7 @@
             <div class="live-from">
                 <span class="live-name">{{ d.name or "Anonymous" }}</span>
                 <span class="live-age">{{ d.age }}</span>
+                {% if d.pinned %}<span class="live-badge is-pinned">pinned</span>{% endif %}
                 {% if d.confirmed %}
                 <span class="live-badge is-confirmed">confirmed</span>
                 {% else %}
@@ -23,12 +24,30 @@
             <p class="live-message">{{ d.message }}</p>
             {% endif %}
         </div>
+        {% if is_owner %}
+        <div class="live-actions">
+            <button type="button" class="live-action"
+                    hx-post="/c/{{ creator.slug }}/live/pin/{{ d.id }}"
+                    hx-swap="none"
+                    title="{% if d.pinned %}Unpin{% else %}Pin{% endif %}">
+                {% if d.pinned %}📌{% else %}📍{% endif %}
+            </button>
+            {% if not d.read %}
+            <button type="button" class="live-action"
+                    hx-post="/c/{{ creator.slug }}/live/read/{{ d.id }}"
+                    hx-swap="none"
+                    title="Mark read">
+                ✓
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
     </li>
     {% endfor %}
 </ul>
 {% else %}
 <div class="live-empty">
-    <p class="muted">No donations in the last 24 hours.</p>
+    <p class="muted">No donations in the last 24 hours{% if min_amount %} above {{ min_amount }}{% endif %}.</p>
     <p class="muted small">
         Share your page: <span class="mono">/c/{{ creator.slug }}</span>
     </p>

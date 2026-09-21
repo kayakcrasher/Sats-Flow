@@ -7,7 +7,7 @@
         <div class="live-title">
             <span class="live-dot"></span>
             <h1>{{ creator.display_name }}</h1>
-            <span class="muted small">Live donation wall · last 24h</span>
+            <span class="muted small">Live wall · last 24h</span>
         </div>
         <div class="live-stats">
             <div class="stat">
@@ -15,8 +15,12 @@
                 <span class="stat-value">{{ totals.count }}</span>
             </div>
             <div class="stat">
-                <span class="stat-label">With messages</span>
+                <span class="stat-label">Messages</span>
                 <span class="stat-value">{{ totals.with_messages }}</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Unread</span>
+                <span class="stat-value">{{ totals.unread }}</span>
             </div>
             <div class="stat">
                 <span class="stat-label">BTC</span>
@@ -32,8 +36,22 @@
 
 <section class="live-body">
     <div class="live-inner">
+        <div class="live-toolbar">
+            <form method="get" action="/c/{{ creator.slug }}/live" class="live-filter">
+                <label class="field" style="margin:0;">
+                    <span class="field-label">Minimum amount (sats/piconero)</span>
+                    <input type="number" class="input" name="min_amount" min="0" step="1"
+                           value="{{ min_amount or '' }}" placeholder="0">
+                </label>
+                <button type="submit" class="btn btn-ghost">Filter</button>
+                {% if min_amount %}
+                <a href="/c/{{ creator.slug }}/live" class="btn btn-ghost">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+
         <div id="live-feed"
-             hx-get="/c/{{ creator.slug }}/live/feed"
+             hx-get="/c/{{ creator.slug }}/live/feed{% if min_amount %}?min_amount={{ min_amount }}{% endif %}"
              hx-trigger="every 10s"
              hx-swap="innerHTML">
             {% include "partials/live_feed.html" %}

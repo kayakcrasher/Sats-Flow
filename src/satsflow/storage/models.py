@@ -30,6 +30,8 @@ class Donation:
     message: str | None
     created_at: int
     confirmed_at: int | None
+    pinned: bool = False
+    read_at: int | None = None
 
 
 @dataclass(frozen=True)

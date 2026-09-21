@@ -127,7 +127,7 @@ class Database:
         except sqlite3.IntegrityError as exc:
             raise DuplicateError(f"creator slug already exists: {slug}") from exc
 
-        return self.get_creator(int(cur.lastrowid))
+        return self.get_creator(int(cur.lastrowid or 0))
 
     def get_creator(self, creator_id: int) -> Creator:
         row = self._conn.execute(
@@ -192,7 +192,7 @@ class Database:
              donor_name, message, _now(), confirmed_at),
         )
         self._conn.commit()
-        return self.get_donation(int(cur.lastrowid))
+        return self.get_donation(int(cur.lastrowid or 0))
 
     def get_donation(self, donation_id: int) -> Donation:
         row = self._conn.execute(
@@ -252,7 +252,7 @@ class Database:
         except sqlite3.IntegrityError as exc:
             raise DuplicateError(f"claim token already exists: {token}") from exc
 
-        return self.get_claim(int(cur.lastrowid))
+        return self.get_claim(int(cur.lastrowid or 0))
 
     def get_claim(self, claim_id: int) -> Claim:
         row = self._conn.execute(

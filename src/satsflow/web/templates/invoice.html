@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Invoice #{{ donation.id }} — {{ creator.display_name }}{% endblock %}
+{% block content %}
+
+<section class="creator-hero">
+    <div class="creator-inner">
+        <div class="creator-avatar">{{ creator.display_name[0] | upper }}</div>
+        <div class="creator-meta">
+            <h1>Send {{ donation.coin }}</h1>
+            <p class="muted">to {{ creator.display_name }} · invoice #{{ donation.id }}</p>
+        </div>
+    </div>
+</section>
+
+<section class="donate">
+    <div class="donate-inner">
+        <div class="donate-card">
+            <h2>Payment details</h2>
+
+            <div class="field">
+                <span class="field-label">Amount</span>
+                <div class="mono" style="font-size:1.4rem; padding: 8px 0;">
+                    {% if donation.coin == "BTC" %}
+                        {{ "%.8f"|format(donation.amount / 100000000) }} ₿
+                    {% else %}
+                        {{ "%.4f"|format(donation.amount / 1000000000000) }} ɱ
+                    {% endif %}
+                    {% if donation.usd %}
+                        <span class="muted small"> · ≈ ${{ "%.2f"|format(donation.usd) }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="field">
+                <span class="field-label">Send to this address</span>
+                <div class="input mono" style="word-break: break-all; padding: 14px;">
+                    {{ donation.address }}
+                </div>
+                <span class="field-hint">
+                    Copy this address into your wallet. Fresh address, generated for this invoice only.
+                </span>
+            </div>
+
+            {% if donation.message %}
+            <div class="field">
+                <span class="field-label">Your message</span>
+                <div class="muted small" style="padding: 8px 0;">"{{ donation.message }}"</div>
+            </div>
+            {% endif %}
+
+            <div class="claim" style="margin-top: 24px;">
+                <h4>Waiting for payment…</h4>
+                <p>
+                    This page will update when the transaction is detected on-chain.
+                    Bookmark it or leave it open — no signup required.
+                </p>
+            </div>
+
+            <a href="/c/{{ creator.slug }}" class="btn btn-ghost btn-block" style="margin-top: 16px;">
+                Back to {{ creator.display_name }}
+            </a>
+        </div>
+
+        <aside class="donate-aside">
+            <h3>What happens next</h3>
+            <ul class="check-list">
+                <li>Broadcast the transaction from your wallet</li>
+                <li>SatsFlow detects it on-chain within seconds</li>
+                <li>99% goes to {{ creator.display_name }}, 1% to the platform</li>
+                <li>Your message appears in the public feed</li>
+            </ul>
+        </aside>
+    </div>
+</section>
+
+{% endblock %}

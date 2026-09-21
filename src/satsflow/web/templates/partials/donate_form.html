@@ -1,4 +1,5 @@
-<form class="donate-card" method="post" action="#" novalidate>
+<form class="donate-card" method="post" action="/c/{{ creator.slug }}/donate" novalidate>
+    <input type="hidden" name="coin" id="coin-input" value="BTC">
     <h2>Send a donation</h2>
     <p class="muted small">
         Pick a coin and amount. A fresh address is generated for this donation only.
@@ -35,8 +36,7 @@
                   placeholder="Great stream tonight — keep it up!"></textarea>
     </label>
 
-    <button type="submit" class="btn btn-primary btn-block" disabled>
+    <button type="submit" class="btn btn-primary btn-block">
         Generate address
     </button>
-    <p class="muted tiny center">Address generation activates in Phase 4.</p>
 </form>

@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from satsflow.storage.db import Database
 from satsflow.storage.seed import seed_demo
-from satsflow.web.routes import creator, dashboard, landing
+from satsflow.web.routes import creator, dashboard, donate, landing
 from satsflow.web.templating import STATIC_DIR
 
 
@@ -28,6 +28,7 @@ def create_app() -> FastAPI:
 
     app.include_router(landing.router)
     app.include_router(creator.router)
+    app.include_router(donate.router)
     app.include_router(dashboard.router)
 
     return app

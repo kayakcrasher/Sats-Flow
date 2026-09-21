@@ -29,6 +29,7 @@ def seed_demo(db: Database) -> None:
             "xxxxxxxxxxxxxxxx"
         ),
     )
+    assert creator.id is not None
 
     db.create_donation(
         creator.id, "BTC", 2_500_000,

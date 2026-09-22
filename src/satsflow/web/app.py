@@ -7,7 +7,17 @@ from fastapi.staticfiles import StaticFiles
 from satsflow.core.payment_watcher import PaymentWatcher
 from satsflow.storage.db import Database
 from satsflow.storage.seed import seed_demo
-from satsflow.web.routes import auth, creator, dashboard, donate, explore, landing, live, price, settings
+from satsflow.web.routes import (
+    auth,
+    creator,
+    dashboard,
+    donate,
+    explore,
+    landing,
+    live,
+    price,
+    settings,
+)
 from satsflow.web.templating import STATIC_DIR
 
 

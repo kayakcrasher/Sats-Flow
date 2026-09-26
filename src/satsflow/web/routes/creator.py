@@ -1,4 +1,4 @@
-"""Public creator donation page routes — reads from the database."""
+"""Public user donation page routes — reads from the database."""
 from __future__ import annotations
 
 import time
@@ -36,26 +36,26 @@ def _donation_to_feed(d: Donation) -> dict:
 
 
 @router.get("/{slug}", response_class=HTMLResponse)
-async def creator_page(request: Request, slug: str) -> HTMLResponse:
+async def user_page(request: Request, slug: str) -> HTMLResponse:
     db: Database = request.app.state.db
 
     try:
-        creator = db.get_creator_by_slug(slug)
+        user = db.get_user_by_slug(slug)
     except NotFoundError:
-        raise HTTPException(status_code=404, detail="Creator not found") from None
+        raise HTTPException(status_code=404, detail="User not found") from None
 
-    if creator.id is None:
-        raise HTTPException(status_code=500, detail="creator id missing")
+    if user.id is None:
+        raise HTTPException(status_code=500, detail="user id missing")
 
-    donations = db.list_donations(creator.id, limit=20)
+    donations = db.list_donations(user.id, limit=20)
 
     btc_sats = sum(d.amount for d in donations if d.coin == "BTC")
     xmr_pico = sum(d.amount for d in donations if d.coin == "XMR")
 
-    creator_ctx = {
-        "slug": creator.slug,
-        "display_name": creator.display_name,
-        "bio": creator.bio,
+    user_ctx = {
+        "slug": user.slug,
+        "display_name": user.display_name,
+        "bio": user.bio,
         "received_sats": btc_sats,
         "received_piconero": xmr_pico,
         "donation_count": len(donations),
@@ -63,10 +63,10 @@ async def creator_page(request: Request, slug: str) -> HTMLResponse:
 
     return templates.TemplateResponse(
         request=request,
-        name="creator.html",
+        name="user.html",
         context={
-            "creator": creator_ctx,
+            "user": user_ctx,
             "feed": [_donation_to_feed(d) for d in donations],
-            "active": "creator",
+            "active": "user",
         },
     )

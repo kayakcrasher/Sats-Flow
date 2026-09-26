@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Settings — {{ creator.display_name }}{% endblock %}
+{% block title %}Settings — {{ user.display_name }}{% endblock %}
 {% block content %}
 
 <section class="dash-head">
     <div class="dash-inner">
         <div>
             <h1>Settings</h1>
-            <p class="muted small">Profile and security for @{{ creator.slug }}</p>
+            <p class="muted small">Profile and security for @{{ user.slug }}</p>
         </div>
         <div class="dash-actions">
-            <a href="/c/{{ creator.slug }}" class="btn btn-ghost">View page</a>
+            <a href="/c/{{ user.slug }}" class="btn btn-ghost">View page</a>
             <a href="/dashboard" class="btn btn-ghost">Dashboard</a>
         </div>
     </div>
@@ -29,26 +29,26 @@
             <label class="field">
                 <span class="field-label">Display name</span>
                 <input type="text" class="input" name="display_name"
-                       value="{{ creator.display_name }}" maxlength="80" required>
+                       value="{{ user.display_name }}" maxlength="80" required>
             </label>
             <label class="field">
                 <span class="field-label">Bio</span>
-                <textarea class="textarea" name="bio" maxlength="280">{{ creator.bio }}</textarea>
+                <textarea class="textarea" name="bio" maxlength="280">{{ user.bio }}</textarea>
             </label>
             <label class="field">
                 <span class="field-label">Bitcoin address</span>
-                <input type="text" class="input" name="btc_address" value="{{ creator.btc_address }}"
+                <input type="text" class="input" name="btc_address" value="{{ user.btc_address }}"
                        placeholder="bc1q..." autocomplete="off">
             </label>
             <label class="field">
                 <span class="field-label">Monero address</span>
-                <input type="text" class="input" name="xmr_address" value="{{ creator.xmr_address }}"
+                <input type="text" class="input" name="xmr_address" value="{{ user.xmr_address }}"
                        placeholder="4..." autocomplete="off">
             </label>
 
             <label class="field">
                 <span class="field-label">Bitcoin xpub (watch-only)</span>
-                <input type="text" class="input mono" name="btc_xpub" value="{{ creator.btc_xpub }}"
+                <input type="text" class="input mono" name="btc_xpub" value="{{ user.btc_xpub }}"
                        placeholder="zpub..." autocomplete="off" spellcheck="false">
                 <span class="field-hint">
                     From your wallet (Sparrow, BlueWallet, Ledger). Watch-only — <strong>never</strong>

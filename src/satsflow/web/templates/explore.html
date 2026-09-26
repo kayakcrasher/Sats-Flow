@@ -11,9 +11,9 @@
 
 <section class="explore-body">
     <div class="explore-inner">
-        {% if creators %}
+        {% if users %}
         <div class="explore-grid">
-            {% for c in creators %}
+            {% for c in users %}
             <a href="/c/{{ c.slug }}" class="explore-card">
                 <div class="explore-avatar">{{ c.display_name[0] | upper }}</div>
                 <div class="explore-info">

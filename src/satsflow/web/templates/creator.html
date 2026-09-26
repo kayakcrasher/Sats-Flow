@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% block title %}{{ creator.display_name }} — SatsFlow{% endblock %}
+{% block title %}{{ user.display_name }} — SatsFlow{% endblock %}
 {% block content %}
 
 <section class="creator-hero">
     <div class="creator-inner">
-        <div class="creator-avatar">{{ creator.display_name[0] | upper }}</div>
+        <div class="creator-avatar">{{ user.display_name[0] | upper }}</div>
         <div class="creator-meta">
-            <h1>{{ creator.display_name }}</h1>
-            <p class="muted">@{{ creator.slug }}</p>
-            <p class="creator-bio">{{ creator.bio }}</p>
+            <h1>{{ user.display_name }}</h1>
+            <p class="muted">@{{ user.slug }}</p>
+            <p class="creator-bio">{{ user.bio }}</p>
         </div>
         <div class="creator-stats">
             <div class="stat">
                 <span class="stat-label">Donations</span>
-                <span class="stat-value">{{ creator.donation_count }}</span>
+                <span class="stat-value">{{ user.donation_count }}</span>
             </div>
             <div class="stat">
                 <span class="stat-label">BTC received</span>

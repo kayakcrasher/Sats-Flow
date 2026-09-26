@@ -5,23 +5,23 @@ from fastapi import Request
 
 from satsflow.security.sessions import COOKIE_NAME
 from satsflow.storage.db import Database
-from satsflow.storage.models import Creator
+from satsflow.storage.models import User
 
 
-def current_creator(request: Request) -> Creator | None:
-    """Return the logged-in creator, or None if not authenticated."""
+def current_user(request: Request) -> User | None:
+    """Return the logged-in user, or None if not authenticated."""
     db: Database = request.app.state.db
     token = request.cookies.get(COOKIE_NAME)
     if not token:
         return None
-    return db.get_session_creator(token)
+    return db.get_session_user(token)
 
 
-def require_creator(request: Request) -> Creator:
-    """Return the logged-in creator or raise 401."""
+def require_user(request: Request) -> User:
+    """Return the logged-in user or raise 401."""
     from fastapi import HTTPException
 
-    creator = current_creator(request)
-    if creator is None:
+    user = current_user(request)
+    if user is None:
         raise HTTPException(status_code=401, detail="Login required")
-    return creator
+    return user

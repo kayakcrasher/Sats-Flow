@@ -15,8 +15,8 @@ STATIC_DIR = WEB_DIR / "static"
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
-def _session_creator(request: Request):
-    """Look up the logged-in creator for use in every template."""
+def _session_user(request: Request):
+    """Look up the logged-in user for use in every template."""
     try:
         db = request.app.state.db
     except AttributeError:
@@ -24,7 +24,7 @@ def _session_creator(request: Request):
     token = request.cookies.get(COOKIE_NAME)
     if not token:
         return None
-    return db.get_session_creator(token)
+    return db.get_session_user(token)
 
 
-templates.env.globals["session_creator"] = _session_creator
+templates.env.globals["session_user"] = _session_user

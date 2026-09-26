@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Live — {{ creator.display_name }}{% endblock %}
+{% block title %}Live — {{ user.display_name }}{% endblock %}
 {% block content %}
 
 <section class="live-head">
     <div class="live-inner">
         <div class="live-title">
             <span class="live-dot"></span>
-            <h1>{{ creator.display_name }}</h1>
+            <h1>{{ user.display_name }}</h1>
             <span class="muted small">Live wall · last 24h</span>
         </div>
         <div class="live-stats">
@@ -37,7 +37,7 @@
 <section class="live-body">
     <div class="live-inner">
         <div class="live-toolbar">
-            <form method="get" action="/c/{{ creator.slug }}/live" class="live-filter">
+            <form method="get" action="/c/{{ user.slug }}/live" class="live-filter">
                 <label class="field" style="margin:0;">
                     <span class="field-label">Minimum amount (sats/piconero)</span>
                     <input type="number" class="input" name="min_amount" min="0" step="1"
@@ -45,13 +45,13 @@
                 </label>
                 <button type="submit" class="btn btn-ghost">Filter</button>
                 {% if min_amount %}
-                <a href="/c/{{ creator.slug }}/live" class="btn btn-ghost">Clear</a>
+                <a href="/c/{{ user.slug }}/live" class="btn btn-ghost">Clear</a>
                 {% endif %}
             </form>
         </div>
 
         <div id="live-feed"
-             hx-get="/c/{{ creator.slug }}/live/feed{% if min_amount %}?min_amount={{ min_amount }}{% endif %}"
+             hx-get="/c/{{ user.slug }}/live/feed{% if min_amount %}?min_amount={{ min_amount }}{% endif %}"
              hx-trigger="every 10s"
              hx-swap="innerHTML">
             {% include "partials/live_feed.html" %}

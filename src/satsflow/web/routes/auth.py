@@ -73,7 +73,7 @@ async def signup(
         )
 
     try:
-        creator = db.create_creator(
+        user = db.create_user(
             slug=slug,
             display_name=display_name,
             bio=bio.strip(),
@@ -89,13 +89,13 @@ async def signup(
             status_code=400,
         )
 
-    if creator.id is None:
-        raise HTTPException(status_code=500, detail="creator id missing")
+    if user.id is None:
+        raise HTTPException(status_code=500, detail="user id missing")
 
     token = new_token()
-    db.create_session(creator.id, token)
+    db.create_session(user.id, token)
 
-    resp = RedirectResponse(url=f"/c/{creator.slug}", status_code=303)
+    resp = RedirectResponse(url=f"/c/{user.slug}", status_code=303)
     resp.set_cookie(value=token, **cookie_kwargs())
     return resp
 
@@ -119,7 +119,7 @@ async def login(
     slug = slug.strip().lower()
 
     try:
-        creator = db.get_creator_by_slug(slug)
+        user = db.get_user_by_slug(slug)
     except NotFoundError:
         return templates.TemplateResponse(
             request=request,
@@ -128,7 +128,7 @@ async def login(
             status_code=400,
         )
 
-    if not creator.password_hash or not verify_password(creator.password_hash, password):
+    if not user.password_hash or not verify_password(user.password_hash, password):
         return templates.TemplateResponse(
             request=request,
             name="auth_login.html",
@@ -136,11 +136,11 @@ async def login(
             status_code=400,
         )
 
-    if creator.id is None:
-        raise HTTPException(status_code=500, detail="creator id missing")
+    if user.id is None:
+        raise HTTPException(status_code=500, detail="user id missing")
 
     token = new_token()
-    db.create_session(creator.id, token)
+    db.create_session(user.id, token)
 
     resp = RedirectResponse(url="/dashboard", status_code=303)
     resp.set_cookie(value=token, **cookie_kwargs())

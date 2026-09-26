@@ -57,24 +57,24 @@ class TestConversions:
 class TestSplitFee:
     def test_default_1_percent(self):
         s = split_fee(1_000_000_000_000)
-        assert s.creator_piconero == 990_000_000_000
+        assert s.user_piconero == 990_000_000_000
         assert s.platform_piconero == 10_000_000_000
         assert s.total_piconero == 1_000_000_000_000
 
-    def test_rounding_favors_creator(self):
-        # 1% of 101 = 1.01 -> int() truncates to 1. Creator gets 100.
+    def test_rounding_favors_user(self):
+        # 1% of 101 = 1.01 -> int() truncates to 1. User gets 100.
         s = split_fee(101)
-        assert s.creator_piconero == 100
+        assert s.user_piconero == 100
         assert s.platform_piconero == 1
 
     def test_custom_fee_percent(self):
         s = split_fee(10_000, fee_percent=0.05)
-        assert s.creator_piconero == 9_500
+        assert s.user_piconero == 9_500
         assert s.platform_piconero == 500
 
     def test_zero_amount(self):
         s = split_fee(0)
-        assert s.creator_piconero == 0
+        assert s.user_piconero == 0
         assert s.platform_piconero == 0
 
     def test_negative_amount_rejected(self):
@@ -89,10 +89,10 @@ class TestSplitFee:
         with pytest.raises(MoneroError, match="fee_percent"):
             split_fee(1000, fee_percent=-0.1)
 
-    def test_very_small_amount_favors_creator(self):
-        # 1% of 1 truncates to 0 platform, 1 creator
+    def test_very_small_amount_favors_user(self):
+        # 1% of 1 truncates to 0 platform, 1 user
         s = split_fee(1)
-        assert s.creator_piconero == 1
+        assert s.user_piconero == 1
         assert s.platform_piconero == 0
 
 

@@ -27,14 +27,14 @@
         {% if is_owner %}
         <div class="live-actions">
             <button type="button" class="live-action"
-                    hx-post="/c/{{ creator.slug }}/live/pin/{{ d.id }}"
+                    hx-post="/c/{{ user.slug }}/live/pin/{{ d.id }}"
                     hx-swap="none"
                     title="{% if d.pinned %}Unpin{% else %}Pin{% endif %}">
                 {% if d.pinned %}📌{% else %}📍{% endif %}
             </button>
             {% if not d.read %}
             <button type="button" class="live-action"
-                    hx-post="/c/{{ creator.slug }}/live/read/{{ d.id }}"
+                    hx-post="/c/{{ user.slug }}/live/read/{{ d.id }}"
                     hx-swap="none"
                     title="Mark read">
                 ✓
@@ -49,7 +49,7 @@
 <div class="live-empty">
     <p class="muted">No donations in the last 24 hours{% if min_amount %} above {{ min_amount }}{% endif %}.</p>
     <p class="muted small">
-        Share your page: <span class="mono">/c/{{ creator.slug }}</span>
+        Share your page: <span class="mono">/c/{{ user.slug }}</span>
     </p>
 </div>
 {% endif %}

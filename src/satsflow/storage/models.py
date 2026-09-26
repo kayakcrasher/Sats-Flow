@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class Creator:
+class User:
     id: int | None
     slug: str
     display_name: str
@@ -19,12 +19,13 @@ class Creator:
     fee_balance_sats: int
     password_hash: str | None
     created_at: int
+    is_creator: bool = True
 
 
 @dataclass(frozen=True)
 class Donation:
     id: int | None
-    creator_id: int
+    user_id: int
     coin: str                     # "BTC" or "XMR"
     amount: int                   # sats for BTC, piconero for XMR
     usd_at_receipt: float | None

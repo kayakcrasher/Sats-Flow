@@ -9,7 +9,7 @@ backend directly. Swapping backends is a config change, not a code change.
 
 Fee model (per-tx forward, no batching):
   Every donation gets two outputs:
-      99% -> creator address
+      99% -> user address
        1% -> GNOMEFINANCE address
   Both are on-chain, both visible, both auditable.
 """
@@ -32,18 +32,18 @@ class BitcoinError(Exception):
 
 @dataclass(frozen=True)
 class FeeSplit:
-    """Result of splitting a donation into creator and platform amounts."""
+    """Result of splitting a donation into user and platform amounts."""
 
-    creator_sats: int
+    user_sats: int
     platform_sats: int
     total_sats: int
 
 
 def split_fee(amount_sats: int, fee_percent: float | None = None) -> FeeSplit:
-    """Split a donation into creator + platform amounts.
+    """Split a donation into user + platform amounts.
 
-    The platform takes a percentage; the creator gets the rest. Rounding
-    favors the creator so a creator never loses a satoshi to truncation.
+    The platform takes a percentage; the user gets the rest. Rounding
+    favors the user so a user never loses a satoshi to truncation.
     """
     if amount_sats < 0:
         raise BitcoinError("amount_sats must be non-negative")
@@ -53,9 +53,9 @@ def split_fee(amount_sats: int, fee_percent: float | None = None) -> FeeSplit:
         raise BitcoinError("fee_percent must be in [0, 1)")
 
     platform = int(amount_sats * pct)
-    creator = amount_sats - platform
+    user = amount_sats - platform
     return FeeSplit(
-        creator_sats=creator,
+        user_sats=user,
         platform_sats=platform,
         total_sats=amount_sats,
     )

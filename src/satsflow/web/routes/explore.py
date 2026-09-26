@@ -1,4 +1,4 @@
-"""Public directory of all creators."""
+"""Public directory of all users."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Request
@@ -13,10 +13,10 @@ router = APIRouter()
 @router.get("/explore", response_class=HTMLResponse)
 async def explore(request: Request) -> HTMLResponse:
     db: Database = request.app.state.db
-    creators = db.list_creators()
+    users = db.list_users()
 
     rows = []
-    for c in creators:
+    for c in users:
         if c.id is None:
             continue
         donations = db.list_donations(c.id, limit=200)
@@ -36,5 +36,5 @@ async def explore(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
         request=request,
         name="explore.html",
-        context={"creators": rows, "active": "explore"},
+        context={"users": rows, "active": "explore"},
     )

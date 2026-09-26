@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — {{ creator.display_name }}{% endblock %}
+{% block title %}Dashboard — {{ user.display_name }}{% endblock %}
 {% block content %}
 
 <section class="dash-head">
     <div class="dash-inner">
         <div>
-            <h1>Welcome, {{ creator.display_name }}</h1>
+            <h1>Welcome, {{ user.display_name }}</h1>
             <p class="muted small">Your donations, messages, and totals.</p>
         </div>
         <div class="dash-actions">
-            <a href="/c/{{ creator.slug }}" class="btn btn-ghost">View public page</a>
-            <a href="/c/{{ creator.slug }}/live" class="btn btn-ghost">Live wall</a>
+            <a href="/c/{{ user.slug }}" class="btn btn-ghost">View public page</a>
+            <a href="/c/{{ user.slug }}/live" class="btn btn-ghost">Live wall</a>
             <a href="/dashboard/export.csv" class="btn btn-ghost">Export CSV</a>
             <button class="btn btn-primary" disabled>Withdraw</button>
         </div>
@@ -119,7 +119,7 @@
         <div class="dash-empty">
             <p class="muted">No donations yet.</p>
             <p class="muted small">
-                Share your page: <span class="mono">/c/{{ creator.slug }}</span>
+                Share your page: <span class="mono">/c/{{ user.slug }}</span>
             </p>
         </div>
         {% endif %}

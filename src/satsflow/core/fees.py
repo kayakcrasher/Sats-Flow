@@ -1,13 +1,13 @@
 """Fee tier logic for SatsFlow.
 
-"Loyalty is Royalty" — the fee drops the longer a creator stays.
+"Loyalty is Royalty" — the fee drops the longer a user stays.
 
 Tiers (checked in order, first match wins):
     Days  0-14  :  3.5%   Launch
     Days 14-60  :  2.5%   Growth
     Days 60+    :  2.0%   Permanent
 
-Per-creator override for Friends of the Dev (1%) and Cofounders (0%).
+Per-user override for Friends of the Dev (1%) and Cofounders (0%).
 """
 from __future__ import annotations
 

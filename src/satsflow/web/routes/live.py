@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 
 from satsflow.storage.db import Database, NotFoundError
 from satsflow.storage.models import Donation
-from satsflow.web.auth_helpers import current_creator
+from satsflow.web.auth_helpers import current_user
 from satsflow.web.templating import templates
 
 router = APIRouter(prefix="/c")
@@ -44,16 +44,16 @@ def _row(d: Donation) -> dict:
 
 def _load(db: Database, slug: str, min_amount: int = 0) -> tuple[dict, list[dict], dict, bool]:
     try:
-        creator = db.get_creator_by_slug(slug)
+        user = db.get_user_by_slug(slug)
     except NotFoundError:
-        raise HTTPException(status_code=404, detail="Creator not found") from None
+        raise HTTPException(status_code=404, detail="User not found") from None
 
-    if creator.id is None:
-        raise HTTPException(status_code=500, detail="creator id missing")
+    if user.id is None:
+        raise HTTPException(status_code=500, detail="user id missing")
 
     since = int(time.time()) - WINDOW_SECONDS
     donations = db.list_donations_since_filtered(
-        creator.id, since, min_amount=min_amount, limit=500
+        user.id, since, min_amount=min_amount, limit=500
     )
 
     totals = {
@@ -61,17 +61,17 @@ def _load(db: Database, slug: str, min_amount: int = 0) -> tuple[dict, list[dict
         "btc": sum(d.amount for d in donations if d.coin == "BTC"),
         "xmr": sum(d.amount for d in donations if d.coin == "XMR"),
         "with_messages": sum(1 for d in donations if d.message),
-        "unread": db.count_unread(creator.id),
+        "unread": db.count_unread(user.id),
     }
 
-    creator_ctx = {
-        "slug": creator.slug,
-        "display_name": creator.display_name,
-        "btc_address": creator.btc_address,
-        "xmr_address": creator.xmr_address,
+    user_ctx = {
+        "slug": user.slug,
+        "display_name": user.display_name,
+        "btc_address": user.btc_address,
+        "xmr_address": user.xmr_address,
     }
 
-    return creator_ctx, [_row(d) for d in donations], totals, False
+    return user_ctx, [_row(d) for d in donations], totals, False
 
 
 @router.get("/{slug}/live", response_class=HTMLResponse)
@@ -81,19 +81,19 @@ async def live_wall(
     min_amount: int = Query(0, ge=0),
 ) -> HTMLResponse:
     db: Database = request.app.state.db
-    creator, donations, totals, _ = _load(db, slug, min_amount)
-    me = current_creator(request)
+    user, donations, totals, _ = _load(db, slug, min_amount)
+    me = current_user(request)
     is_owner = me is not None and me.slug == slug
     return templates.TemplateResponse(
         request=request,
         name="live.html",
         context={
-            "creator": creator,
+            "user": user,
             "donations": donations,
             "totals": totals,
             "min_amount": min_amount,
             "is_owner": is_owner,
-            "active": "creator",
+            "active": "user",
         },
     )
 
@@ -105,14 +105,14 @@ async def live_feed(
     min_amount: int = Query(0, ge=0),
 ) -> HTMLResponse:
     db: Database = request.app.state.db
-    creator, donations, totals, _ = _load(db, slug, min_amount)
-    me = current_creator(request)
+    user, donations, totals, _ = _load(db, slug, min_amount)
+    me = current_user(request)
     is_owner = me is not None and me.slug == slug
     return templates.TemplateResponse(
         request=request,
         name="partials/live_feed.html",
         context={
-            "creator": creator,
+            "user": user,
             "donations": donations,
             "totals": totals,
             "min_amount": min_amount,
@@ -124,7 +124,7 @@ async def live_feed(
 # --- Owner-only actions ---------------------------------------------------
 
 def _require_owner(request: Request, slug: str) -> None:
-    me = current_creator(request)
+    me = current_user(request)
     if me is None or me.slug != slug:
         raise HTTPException(status_code=403, detail="Not your live wall")
 

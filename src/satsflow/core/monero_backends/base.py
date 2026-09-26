@@ -7,7 +7,7 @@ which implementation is active.
 Design:
   - Non-custodial: we only ever need *watch-only* capability. The backend
     never holds spend keys.
-  - Monero uses subaddresses for per-invoice receive addresses. A creator's
+  - Monero uses subaddresses for per-invoice receive addresses. A user's
     wallet has a primary address plus a set of subaddresses. We generate a
     fresh subaddress per donation.
   - Amounts are piconero (1 XMR = 10**12 piconero), integers only.

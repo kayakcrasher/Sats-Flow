@@ -39,12 +39,12 @@ async def create_invoice(
     db: Database = request.app.state.db
 
     try:
-        creator = db.get_creator_by_slug(slug)
+        user = db.get_user_by_slug(slug)
     except NotFoundError:
-        raise HTTPException(status_code=404, detail="Creator not found") from None
+        raise HTTPException(status_code=404, detail="User not found") from None
 
-    if creator.id is None:
-        raise HTTPException(status_code=500, detail="Creator id missing")
+    if user.id is None:
+        raise HTTPException(status_code=500, detail="User id missing")
 
     coin = coin.upper()
     if coin not in ("BTC", "XMR"):
@@ -86,19 +86,19 @@ async def create_invoice(
     label = f"inv-{slug}-{secrets.token_hex(4)}"
     try:
         if coin == "BTC":
-            btc = Bitcoin(xpub=creator.btc_xpub)
+            btc = Bitcoin(xpub=user.btc_xpub)
             address = btc.new_address(label)
         else:
             address = _load_xmr().new_address(label)
     except (BitcoinError, MoneroError) as exc:
         raise HTTPException(status_code=502, detail=f"address generation failed: {exc}") from None
 
-    # Snapshot the creator's fee percent at the moment of donation.
-    fee_pct = fee_percent_for(creator.created_at, override=creator.fee_override)
+    # Snapshot the user's fee percent at the moment of donation.
+    fee_pct = fee_percent_for(user.created_at, override=user.fee_override)
     platform_fee = int(amount_int * fee_pct)
 
     donation = db.create_donation(
-        creator_id=creator.id,
+        user_id=user.id,
         coin=coin,
         amount=amount_int,
         usd_at_receipt=float(amount_usd) if amount_usd.strip() else None,
@@ -122,12 +122,12 @@ async def show_invoice(
     db: Database = request.app.state.db
 
     try:
-        creator = db.get_creator_by_slug(slug)
+        user = db.get_user_by_slug(slug)
         donation = db.get_donation(donation_id)
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Invoice not found") from None
 
-    if donation.creator_id != creator.id:
+    if donation.user_id != user.id:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
     # Build a payment URI + QR code for wallets that scan.
@@ -147,9 +147,9 @@ async def show_invoice(
         request=request,
         name="invoice.html",
         context={
-            "creator": {
-                "slug": creator.slug,
-                "display_name": creator.display_name,
+            "user": {
+                "slug": user.slug,
+                "display_name": user.display_name,
             },
             "donation": {
                 "id": donation.id,
@@ -162,7 +162,7 @@ async def show_invoice(
             },
             "qr_data_uri": qr_data_uri,
             "pay_uri": pay_uri,
-            "active": "creator",
+            "active": "user",
         },
     )
 
@@ -176,12 +176,12 @@ async def invoice_status(
     db: Database = request.app.state.db
 
     try:
-        creator = db.get_creator_by_slug(slug)
+        user = db.get_user_by_slug(slug)
         donation = db.get_donation(donation_id)
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Invoice not found") from None
 
-    if donation.creator_id != creator.id:
+    if donation.user_id != user.id:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
     watcher: PaymentWatcher = request.app.state.watcher

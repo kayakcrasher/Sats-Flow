@@ -20,24 +20,24 @@ from satsflow.core.bitcoin_backends.public_api import PublicAPIBackend
 class TestSplitFee:
     def test_default_1_percent(self):
         s = split_fee(100_000)
-        assert s.creator_sats == 99_000
+        assert s.user_sats == 99_000
         assert s.platform_sats == 1_000
         assert s.total_sats == 100_000
 
-    def test_rounding_favors_creator(self):
-        # 1% of 101 = 1.01 -> int() truncates to 1. Creator gets 100.
+    def test_rounding_favors_user(self):
+        # 1% of 101 = 1.01 -> int() truncates to 1. User gets 100.
         s = split_fee(101)
-        assert s.creator_sats == 100
+        assert s.user_sats == 100
         assert s.platform_sats == 1
 
     def test_custom_fee_percent(self):
         s = split_fee(10_000, fee_percent=0.05)
-        assert s.creator_sats == 9_500
+        assert s.user_sats == 9_500
         assert s.platform_sats == 500
 
     def test_zero_amount(self):
         s = split_fee(0)
-        assert s.creator_sats == 0
+        assert s.user_sats == 0
         assert s.platform_sats == 0
 
     def test_negative_amount_rejected(self):

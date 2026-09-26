@@ -26,57 +26,57 @@ def db():
 
 
 # ---------------------------------------------------------------------------
-# Creators
+# Users
 # ---------------------------------------------------------------------------
 
-class TestCreators:
+class TestUsers:
     def test_create_and_get(self, db):
-        c = db.create_creator("alice", "Alice", bio="hello")
+        c = db.create_user("alice", "Alice", bio="hello")
         assert c.id is not None
         assert c.slug == "alice"
         assert c.display_name == "Alice"
         assert c.bio == "hello"
         assert c.created_at > 0
 
-        fetched = db.get_creator(c.id)
+        fetched = db.get_user(c.id)
         assert fetched.slug == "alice"
 
     def test_get_by_slug(self, db):
-        db.create_creator("bob", "Bob")
-        c = db.get_creator_by_slug("bob")
+        db.create_user("bob", "Bob")
+        c = db.get_user_by_slug("bob")
         assert c.display_name == "Bob"
 
     def test_duplicate_slug_rejected(self, db):
-        db.create_creator("alice", "Alice")
+        db.create_user("alice", "Alice")
         with pytest.raises(DuplicateError, match="already exists"):
-            db.create_creator("alice", "Other Alice")
+            db.create_user("alice", "Other Alice")
 
     def test_unknown_id_raises(self, db):
         with pytest.raises(NotFoundError, match="not found"):
-            db.get_creator(9999)
+            db.get_user(9999)
 
     def test_unknown_slug_raises(self, db):
         with pytest.raises(NotFoundError, match="not found"):
-            db.get_creator_by_slug("nobody")
+            db.get_user_by_slug("nobody")
 
-    def test_list_creators(self, db):
-        db.create_creator("a", "A")
-        db.create_creator("b", "B")
-        db.create_creator("c", "C")
-        creators = db.list_creators()
-        assert len(creators) == 3
+    def test_list_users(self, db):
+        db.create_user("a", "A")
+        db.create_user("b", "B")
+        db.create_user("c", "C")
+        users = db.list_users()
+        assert len(users) == 3
         # newest first
-        assert creators[0].slug == "c"
+        assert users[0].slug == "c"
 
     def test_optional_fields_default_none(self, db):
-        c = db.create_creator("x", "X")
+        c = db.create_user("x", "X")
         assert c.btc_address is None
         assert c.xmr_address is None
         assert c.password_hash is None
 
     def test_password_hash_stored(self, db):
-        c = db.create_creator("x", "X", password_hash="argon2hash")
-        fetched = db.get_creator(c.id)
+        c = db.create_user("x", "X", password_hash="argon2hash")
+        fetched = db.get_user(c.id)
         assert fetched.password_hash == "argon2hash"
 
 
@@ -86,7 +86,7 @@ class TestCreators:
 
 class TestDonations:
     def test_create_and_get(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         d = db.create_donation(
             c.id, "BTC", 100_000,
             usd_at_receipt=42.50,
@@ -94,7 +94,7 @@ class TestDonations:
             message="great work!",
         )
         assert d.id is not None
-        assert d.creator_id == c.id
+        assert d.user_id == c.id
         assert d.coin == "BTC"
         assert d.amount == 100_000
         assert d.usd_at_receipt == 42.50
@@ -103,23 +103,23 @@ class TestDonations:
         assert d.confirmed_at is None
 
     def test_xmr_donation(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         d = db.create_donation(c.id, "XMR", 1_000_000_000_000)
         assert d.coin == "XMR"
         assert d.amount == 1_000_000_000_000
 
     def test_invalid_coin_rejected(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         with pytest.raises(StorageError, match="unsupported coin"):
             db.create_donation(c.id, "DOGE", 100)
 
     def test_negative_amount_rejected(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         with pytest.raises(StorageError, match="non-negative"):
             db.create_donation(c.id, "BTC", -1)
 
-    def test_list_donations_for_creator(self, db):
-        c = db.create_creator("alice", "Alice")
+    def test_list_donations_for_user(self, db):
+        c = db.create_user("alice", "Alice")
         db.create_donation(c.id, "BTC", 100)
         db.create_donation(c.id, "BTC", 200)
         db.create_donation(c.id, "XMR", 300)
@@ -127,11 +127,11 @@ class TestDonations:
         assert len(donations) == 3
 
     def test_list_donations_empty(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         assert db.list_donations(c.id) == []
 
     def test_list_donations_limit_offset(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         for i in range(5):
             db.create_donation(c.id, "BTC", (i + 1) * 100)
         page1 = db.list_donations(c.id, limit=2, offset=0)
@@ -141,16 +141,16 @@ class TestDonations:
         # Different rows
         assert page1[0].id != page2[0].id
 
-    def test_donations_isolated_by_creator(self, db):
-        alice = db.create_creator("alice", "Alice")
-        bob = db.create_creator("bob", "Bob")
+    def test_donations_isolated_by_user(self, db):
+        alice = db.create_user("alice", "Alice")
+        bob = db.create_user("bob", "Bob")
         db.create_donation(alice.id, "BTC", 100)
         db.create_donation(bob.id, "BTC", 200)
         assert len(db.list_donations(alice.id)) == 1
         assert db.list_donations(alice.id)[0].amount == 100
 
     def test_confirm_donation(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         d = db.create_donation(c.id, "BTC", 100)
         assert d.confirmed_at is None
 
@@ -159,7 +159,7 @@ class TestDonations:
         assert confirmed.txid == "abc123"
 
     def test_confirm_preserves_existing_txid(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         d = db.create_donation(c.id, "BTC", 100, txid="original")
         confirmed = db.confirm_donation(d.id)  # no txid passed
         assert confirmed.txid == "original"
@@ -175,7 +175,7 @@ class TestDonations:
 
 class TestClaims:
     def test_create_and_get(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         d = db.create_donation(c.id, "BTC", 100)
         claim = db.create_claim(d.id, token="tok-abc")
         assert claim.id is not None
@@ -184,14 +184,14 @@ class TestClaims:
         assert claim.claimed_at > 0
 
     def test_get_by_token(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         d = db.create_donation(c.id, "BTC", 100)
         db.create_claim(d.id, token="tok-abc")
         claim = db.get_claim_by_token("tok-abc")
         assert claim.donation_id == d.id
 
     def test_duplicate_token_rejected(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         d = db.create_donation(c.id, "BTC", 100)
         db.create_claim(d.id, token="tok-abc")
         with pytest.raises(DuplicateError, match="already exists"):
@@ -216,11 +216,11 @@ class TestLifecycle:
         os.close(fd)
         try:
             db1 = Database(path)
-            c = db1.create_creator("alice", "Alice")
+            c = db1.create_user("alice", "Alice")
             db1.close()
 
             db2 = Database(path)
-            fetched = db2.get_creator_by_slug("alice")
+            fetched = db2.get_user_by_slug("alice")
             assert fetched.id == c.id
             db2.close()
         finally:
@@ -231,18 +231,18 @@ class TestLifecycle:
         os.close(fd)
         try:
             with Database(path) as db:
-                db.create_creator("alice", "Alice")
+                db.create_user("alice", "Alice")
             # Connection closed here; no exception = pass
         finally:
             Path(path).unlink(missing_ok=True)
 
     def test_foreign_key_cascade(self, db):
-        c = db.create_creator("alice", "Alice")
+        c = db.create_user("alice", "Alice")
         d = db.create_donation(c.id, "BTC", 100)
         db.create_claim(d.id, token="tok-abc")
 
-        # Delete the creator -> donations and claims cascade
-        db._conn.execute("DELETE FROM creators WHERE id = ?", (c.id,))
+        # Delete the user -> donations and claims cascade
+        db._conn.execute("DELETE FROM users WHERE id = ?", (c.id,))
         db._conn.commit()
 
         with pytest.raises(NotFoundError):

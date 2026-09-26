@@ -19,10 +19,10 @@ from pathlib import Path
 from typing import Self
 
 from satsflow import config
-from satsflow.storage.models import Claim, Creator, Donation
+from satsflow.storage.models import Claim, Donation, User
 
 SCHEMA = """
-CREATE TABLE IF NOT EXISTS creators (
+CREATE TABLE IF NOT EXISTS users (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     slug            TEXT NOT NULL UNIQUE,
     display_name    TEXT NOT NULL,
@@ -33,13 +33,14 @@ CREATE TABLE IF NOT EXISTS creators (
     next_btc_index  INTEGER NOT NULL DEFAULT 0,
     fee_override    REAL,
     fee_balance_sats INTEGER NOT NULL DEFAULT 0,
+    is_creator      INTEGER NOT NULL DEFAULT 1,
     password_hash   TEXT,
     created_at      INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS donations (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    creator_id      INTEGER NOT NULL,
+    user_id      INTEGER NOT NULL,
     coin            TEXT NOT NULL CHECK (coin IN ('BTC', 'XMR')),
     amount          INTEGER NOT NULL,
     usd_at_receipt  REAL,
@@ -53,11 +54,11 @@ CREATE TABLE IF NOT EXISTS donations (
     fee_percent_at_creation REAL NOT NULL DEFAULT 0,
     pinned          INTEGER NOT NULL DEFAULT 0,
     read_at         INTEGER,
-    FOREIGN KEY (creator_id) REFERENCES creators(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_donations_creator
-    ON donations(creator_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_donations_user
+    ON donations(user_id, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_donations_address
     ON donations(address);
@@ -73,22 +74,22 @@ CREATE TABLE IF NOT EXISTS claims (
 CREATE TABLE IF NOT EXISTS sessions (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     token           TEXT NOT NULL UNIQUE,
-    creator_id      INTEGER NOT NULL,
+    user_id      INTEGER NOT NULL,
     created_at      INTEGER NOT NULL,
     expires_at      INTEGER NOT NULL,
-    FOREIGN KEY (creator_id) REFERENCES creators(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
 
 CREATE TABLE IF NOT EXISTS fee_settlements (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    creator_id      INTEGER NOT NULL,
+    user_id      INTEGER NOT NULL,
     amount_sats     INTEGER NOT NULL,
     txid            TEXT NOT NULL,
     address         TEXT,
     created_at      INTEGER NOT NULL,
-    FOREIGN KEY (creator_id) REFERENCES creators(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 """
 
@@ -104,22 +105,22 @@ def _migrate(conn: sqlite3.Connection) -> None:
     # Index depends on the columns above being present.
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_donations_pinned "
-        "ON donations(creator_id, pinned DESC, created_at DESC)"
+        "ON donations(user_id, pinned DESC, created_at DESC)"
     )
-    # Creator columns added for per-creator xpub + fee override
-    cur = conn.execute("PRAGMA table_info(creators)")
-    creator_cols = {row[1] for row in cur.fetchall()}
-    if "btc_xpub" not in creator_cols:
-        conn.execute("ALTER TABLE creators ADD COLUMN btc_xpub TEXT")
-    if "next_btc_index" not in creator_cols:
+    # User columns added for per-user xpub + fee override
+    cur = conn.execute("PRAGMA table_info(users)")
+    user_cols = {row[1] for row in cur.fetchall()}
+    if "btc_xpub" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN btc_xpub TEXT")
+    if "next_btc_index" not in user_cols:
         conn.execute(
-            "ALTER TABLE creators ADD COLUMN next_btc_index INTEGER NOT NULL DEFAULT 0"
+            "ALTER TABLE users ADD COLUMN next_btc_index INTEGER NOT NULL DEFAULT 0"
         )
-    if "fee_override" not in creator_cols:
-        conn.execute("ALTER TABLE creators ADD COLUMN fee_override REAL")
-    if "fee_balance_sats" not in creator_cols:
+    if "fee_override" not in user_cols:
+        conn.execute("ALTER TABLE users ADD COLUMN fee_override REAL")
+    if "fee_balance_sats" not in user_cols:
         conn.execute(
-            "ALTER TABLE creators ADD COLUMN fee_balance_sats INTEGER NOT NULL DEFAULT 0"
+            "ALTER TABLE users ADD COLUMN fee_balance_sats INTEGER NOT NULL DEFAULT 0"
         )
     cur = conn.execute("PRAGMA table_info(donations)")
     donation_cols = {row[1] for row in cur.fetchall()}
@@ -174,9 +175,9 @@ class Database:
     def __exit__(self, *exc) -> None:
         self.close()
 
-    # --- Creators -----------------------------------------------------------
+    # --- Users -----------------------------------------------------------
 
-    def create_creator(
+    def create_user(
         self,
         slug: str,
         display_name: str,
@@ -184,10 +185,10 @@ class Database:
         btc_address: str | None = None,
         xmr_address: str | None = None,
         password_hash: str | None = None,
-    ) -> Creator:
+    ) -> User:
         try:
             cur = self._conn.execute(
-                """INSERT INTO creators
+                """INSERT INTO users
                    (slug, display_name, bio, btc_address, xmr_address,
                     password_hash, created_at)
                    VALUES (?, ?, ?, ?, ?, ?, ?)""",
@@ -196,35 +197,35 @@ class Database:
             )
             self._conn.commit()
         except sqlite3.IntegrityError as exc:
-            raise DuplicateError(f"creator slug already exists: {slug}") from exc
+            raise DuplicateError(f"user slug already exists: {slug}") from exc
 
-        return self.get_creator(int(cur.lastrowid or 0))
+        return self.get_user(int(cur.lastrowid or 0))
 
-    def get_creator(self, creator_id: int) -> Creator:
+    def get_user(self, user_id: int) -> User:
         row = self._conn.execute(
-            "SELECT * FROM creators WHERE id = ?", (creator_id,)
+            "SELECT * FROM users WHERE id = ?", (user_id,)
         ).fetchone()
         if row is None:
-            raise NotFoundError(f"creator {creator_id} not found")
-        return self._row_to_creator(row)
+            raise NotFoundError(f"user {user_id} not found")
+        return self._row_to_user(row)
 
-    def get_creator_by_slug(self, slug: str) -> Creator:
+    def get_user_by_slug(self, slug: str) -> User:
         row = self._conn.execute(
-            "SELECT * FROM creators WHERE slug = ?", (slug,)
+            "SELECT * FROM users WHERE slug = ?", (slug,)
         ).fetchone()
         if row is None:
-            raise NotFoundError(f"creator slug not found: {slug}")
-        return self._row_to_creator(row)
+            raise NotFoundError(f"user slug not found: {slug}")
+        return self._row_to_user(row)
 
-    def list_creators(self) -> list[Creator]:
+    def list_users(self) -> list[User]:
         rows = self._conn.execute(
-            "SELECT * FROM creators ORDER BY created_at DESC, id DESC"
+            "SELECT * FROM users ORDER BY created_at DESC, id DESC"
         ).fetchall()
-        return [self._row_to_creator(r) for r in rows]
+        return [self._row_to_user(r) for r in rows]
 
     @staticmethod
-    def _row_to_creator(row: sqlite3.Row) -> Creator:
-        return Creator(
+    def _row_to_user(row: sqlite3.Row) -> User:
+        return User(
             id=row["id"],
             slug=row["slug"],
             display_name=row["display_name"],
@@ -235,6 +236,7 @@ class Database:
             next_btc_index=int(row["next_btc_index"] or 0),
             fee_override=row["fee_override"],
             fee_balance_sats=int(row["fee_balance_sats"] or 0),
+            is_creator=bool(row["is_creator"]),
             password_hash=row["password_hash"],
             created_at=row["created_at"],
         )
@@ -243,7 +245,7 @@ class Database:
 
     def create_donation(
         self,
-        creator_id: int,
+        user_id: int,
         coin: str,
         amount: int,
         usd_at_receipt: float | None = None,
@@ -262,11 +264,11 @@ class Database:
 
         cur = self._conn.execute(
             """INSERT INTO donations
-               (creator_id, coin, amount, usd_at_receipt, txid, address,
+               (user_id, coin, amount, usd_at_receipt, txid, address,
                 donor_name, message, created_at, confirmed_at,
                 platform_fee_sats, fee_percent_at_creation)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (creator_id, coin, amount, usd_at_receipt, txid, address,
+            (user_id, coin, amount, usd_at_receipt, txid, address,
              donor_name, message, _now(), confirmed_at,
              platform_fee_sats, fee_percent_at_creation),
         )
@@ -282,14 +284,14 @@ class Database:
         return self._row_to_donation(row)
 
     def list_donations(
-        self, creator_id: int, limit: int = 50, offset: int = 0
+        self, user_id: int, limit: int = 50, offset: int = 0
     ) -> list[Donation]:
         rows = self._conn.execute(
             """SELECT * FROM donations
-               WHERE creator_id = ?
+               WHERE user_id = ?
                ORDER BY created_at DESC
                LIMIT ? OFFSET ?""",
-            (creator_id, limit, offset),
+            (user_id, limit, offset),
         ).fetchall()
         return [self._row_to_donation(r) for r in rows]
 
@@ -304,15 +306,15 @@ class Database:
         return self.get_donation(donation_id)
 
     def list_donations_since(
-        self, creator_id: int, since_ts: int, limit: int = 500
+        self, user_id: int, since_ts: int, limit: int = 500
     ) -> list[Donation]:
-        """All donations for a creator newer than since_ts (Unix seconds)."""
+        """All donations for a user newer than since_ts (Unix seconds)."""
         rows = self._conn.execute(
             """SELECT * FROM donations
-               WHERE creator_id = ? AND created_at >= ?
+               WHERE user_id = ? AND created_at >= ?
                ORDER BY created_at DESC, id DESC
                LIMIT ?""",
-            (creator_id, since_ts, limit),
+            (user_id, since_ts, limit),
         ).fetchall()
         return [self._row_to_donation(r) for r in rows]
 
@@ -320,7 +322,7 @@ class Database:
     def _row_to_donation(row: sqlite3.Row) -> Donation:
         return Donation(
             id=row["id"],
-            creator_id=row["creator_id"],
+            user_id=row["user_id"],
             coin=row["coin"],
             amount=row["amount"],
             usd_at_receipt=row["usd_at_receipt"],
@@ -378,22 +380,22 @@ class Database:
     # --- Sessions -----------------------------------------------------------
 
     def create_session(
-        self, creator_id: int, token: str, ttl_seconds: int = 30 * 24 * 3600
+        self, user_id: int, token: str, ttl_seconds: int = 30 * 24 * 3600
     ) -> int:
         """Create a session row. Returns the session id."""
         now = _now()
         cur = self._conn.execute(
-            """INSERT INTO sessions (token, creator_id, created_at, expires_at)
+            """INSERT INTO sessions (token, user_id, created_at, expires_at)
                VALUES (?, ?, ?, ?)""",
-            (token, creator_id, now, now + ttl_seconds),
+            (token, user_id, now, now + ttl_seconds),
         )
         self._conn.commit()
         if cur.lastrowid is None:
             raise StorageError("insert did not return a rowid")
         return int(cur.lastrowid)
 
-    def get_session_creator(self, token: str) -> Creator | None:
-        """Return the creator for a live session, or None if expired/unknown."""
+    def get_session_user(self, token: str) -> User | None:
+        """Return the user for a live session, or None if expired/unknown."""
         row = self._conn.execute(
             "SELECT * FROM sessions WHERE token = ?", (token,)
         ).fetchone()
@@ -403,7 +405,7 @@ class Database:
             self.delete_session(token)
             return None
         try:
-            return self.get_creator(int(row["creator_id"]))
+            return self.get_user(int(row["user_id"]))
         except NotFoundError:
             return None
 
@@ -421,7 +423,7 @@ class Database:
 
     def list_donations_since_filtered(
         self,
-        creator_id: int,
+        user_id: int,
         since_ts: int,
         min_amount: int = 0,
         limit: int = 500,
@@ -429,10 +431,10 @@ class Database:
         """Same as list_donations_since, but only donations >= min_amount."""
         rows = self._conn.execute(
             """SELECT * FROM donations
-               WHERE creator_id = ? AND created_at >= ? AND amount >= ?
+               WHERE user_id = ? AND created_at >= ? AND amount >= ?
                ORDER BY pinned DESC, created_at DESC, id DESC
                LIMIT ?""",
-            (creator_id, since_ts, min_amount, limit),
+            (user_id, since_ts, min_amount, limit),
         ).fetchall()
         return [self._row_to_donation(r) for r in rows]
 
@@ -452,72 +454,72 @@ class Database:
         self._conn.commit()
         return self.get_donation(donation_id)
 
-    def count_unread(self, creator_id: int) -> int:
+    def count_unread(self, user_id: int) -> int:
         row = self._conn.execute(
-            "SELECT COUNT(*) AS n FROM donations WHERE creator_id = ? AND read_at IS NULL",
-            (creator_id,),
+            "SELECT COUNT(*) AS n FROM donations WHERE user_id = ? AND read_at IS NULL",
+            (user_id,),
         ).fetchone()
         return int(row["n"]) if row else 0
 
-    def set_creator_xpub(self, creator_id: int, xpub: str | None) -> Creator:
-        """Set or clear a creator's BTC xpub (watch-only)."""
+    def set_user_xpub(self, user_id: int, xpub: str | None) -> User:
+        """Set or clear a user's BTC xpub (watch-only)."""
         self._conn.execute(
-            "UPDATE creators SET btc_xpub = ? WHERE id = ?",
-            (xpub, creator_id),
+            "UPDATE users SET btc_xpub = ? WHERE id = ?",
+            (xpub, user_id),
         )
         self._conn.commit()
-        return self.get_creator(creator_id)
+        return self.get_user(user_id)
 
-    def bump_btc_index(self, creator_id: int) -> int:
+    def bump_btc_index(self, user_id: int) -> int:
         """Atomically reserve the next BTC derivation index. Returns the used one."""
         cur = self._conn.execute(
-            "SELECT next_btc_index FROM creators WHERE id = ?", (creator_id,)
+            "SELECT next_btc_index FROM users WHERE id = ?", (user_id,)
         )
         row = cur.fetchone()
         if row is None:
-            raise NotFoundError(f"creator {creator_id} not found")
+            raise NotFoundError(f"user {user_id} not found")
         used = int(row["next_btc_index"] or 0)
         self._conn.execute(
-            "UPDATE creators SET next_btc_index = ? WHERE id = ?",
-            (used + 1, creator_id),
+            "UPDATE users SET next_btc_index = ? WHERE id = ?",
+            (used + 1, user_id),
         )
         self._conn.commit()
         return used
 
-    def set_fee_override(self, creator_id: int, override: float | None) -> Creator:
+    def set_fee_override(self, user_id: int, override: float | None) -> User:
         """Set a fee override (e.g. 0.01 for Friends of the Dev). NULL clears it."""
         if override is not None and not (0.0 <= override < 1.0):
             raise StorageError(f"fee_override out of range: {override}")
         self._conn.execute(
-            "UPDATE creators SET fee_override = ? WHERE id = ?",
-            (override, creator_id),
+            "UPDATE users SET fee_override = ? WHERE id = ?",
+            (override, user_id),
         )
         self._conn.commit()
-        return self.get_creator(creator_id)
+        return self.get_user(user_id)
 
-    def increment_fee_balance(self, creator_id: int, amount_sats: int) -> int:
-        """Add to the creator's fee balance. Returns the new balance."""
+    def increment_fee_balance(self, user_id: int, amount_sats: int) -> int:
+        """Add to the user's fee balance. Returns the new balance."""
         self._conn.execute(
-            "UPDATE creators SET fee_balance_sats = fee_balance_sats + ? WHERE id = ?",
-            (amount_sats, creator_id),
+            "UPDATE users SET fee_balance_sats = fee_balance_sats + ? WHERE id = ?",
+            (amount_sats, user_id),
         )
         self._conn.commit()
         row = self._conn.execute(
-            "SELECT fee_balance_sats FROM creators WHERE id = ?", (creator_id,)
+            "SELECT fee_balance_sats FROM users WHERE id = ?", (user_id,)
         ).fetchone()
         if row is None:
-            raise NotFoundError(f"creator {creator_id} not found")
+            raise NotFoundError(f"user {user_id} not found")
         return int(row["fee_balance_sats"] or 0)
 
-    def reset_fee_balance(self, creator_id: int) -> None:
+    def reset_fee_balance(self, user_id: int) -> None:
         self._conn.execute(
-            "UPDATE creators SET fee_balance_sats = 0 WHERE id = ?", (creator_id,)
+            "UPDATE users SET fee_balance_sats = 0 WHERE id = ?", (user_id,)
         )
         self._conn.commit()
 
     def record_settlement(
         self,
-        creator_id: int,
+        user_id: int,
         amount_sats: int,
         txid: str,
         address: str | None = None,
@@ -525,18 +527,18 @@ class Database:
         """Record a fee payment. Returns settlement id."""
         cur = self._conn.execute(
             """INSERT INTO fee_settlements
-               (creator_id, amount_sats, txid, address, created_at)
+               (user_id, amount_sats, txid, address, created_at)
                VALUES (?, ?, ?, ?, ?)""",
-            (creator_id, amount_sats, txid, address, _now()),
+            (user_id, amount_sats, txid, address, _now()),
         )
         self._conn.commit()
         if cur.lastrowid is None:
             raise StorageError("insert did not return a rowid")
         return int(cur.lastrowid)
 
-    def list_settlements(self, creator_id: int) -> list[dict]:
+    def list_settlements(self, user_id: int) -> list[dict]:
         rows = self._conn.execute(
-            "SELECT * FROM fee_settlements WHERE creator_id = ? ORDER BY created_at DESC",
-            (creator_id,),
+            "SELECT * FROM fee_settlements WHERE user_id = ? ORDER BY created_at DESC",
+            (user_id,),
         ).fetchall()
         return [dict(r) for r in rows]

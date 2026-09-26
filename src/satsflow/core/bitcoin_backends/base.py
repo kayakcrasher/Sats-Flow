@@ -7,7 +7,7 @@ care which implementation is active.
 Design:
   - Non-custodial: we only ever need *watch-only* capability. The backend
     never holds spend keys, never signs transactions.
-  - Address generation is per-invoice. A creator's xpub derives a fresh
+  - Address generation is per-invoice. A user's xpub derives a fresh
     receive address for each donation. This gives us reconciliation for
     free and avoids address reuse.
   - Payment checking returns a structured status, not a boolean, so the

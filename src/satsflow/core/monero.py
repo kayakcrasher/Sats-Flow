@@ -10,7 +10,7 @@ backend directly. Swapping backends is a config change, not a code change.
 
 Fee model (per-tx forward, no batching):
   Every donation splits on-chain:
-      99% -> creator subaddress
+      99% -> user subaddress
        1% -> GNOMEFINANCE address
   Amounts are piconero (1 XMR = 10**12 piconero), integers only.
 """
@@ -34,18 +34,18 @@ class MoneroError(Exception):
 
 @dataclass(frozen=True)
 class FeeSplit:
-    """Result of splitting a donation into creator and platform amounts."""
+    """Result of splitting a donation into user and platform amounts."""
 
-    creator_piconero: int
+    user_piconero: int
     platform_piconero: int
     total_piconero: int
 
 
 def split_fee(amount_piconero: int, fee_percent: float | None = None) -> FeeSplit:
-    """Split a donation into creator + platform amounts.
+    """Split a donation into user + platform amounts.
 
-    The platform takes a percentage; the creator gets the rest. Rounding
-    favors the creator so a creator never loses a piconero to truncation.
+    The platform takes a percentage; the user gets the rest. Rounding
+    favors the user so a user never loses a piconero to truncation.
     """
     if amount_piconero < 0:
         raise MoneroError("amount_piconero must be non-negative")
@@ -55,9 +55,9 @@ def split_fee(amount_piconero: int, fee_percent: float | None = None) -> FeeSpli
         raise MoneroError("fee_percent must be in [0, 1)")
 
     platform = int(amount_piconero * pct)
-    creator = amount_piconero - platform
+    user = amount_piconero - platform
     return FeeSplit(
-        creator_piconero=creator,
+        user_piconero=user,
         platform_piconero=platform,
         total_piconero=amount_piconero,
     )

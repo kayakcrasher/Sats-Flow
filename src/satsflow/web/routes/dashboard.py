@@ -1,4 +1,4 @@
-"""Creator dashboard route — shows the logged-in creator's data."""
+"""User dashboard route — shows the logged-in user's data."""
 from __future__ import annotations
 
 import csv
@@ -15,8 +15,8 @@ from satsflow.core.fees import (
     tier_name,
 )
 from satsflow.storage.db import Database
-from satsflow.storage.models import Creator, Donation
-from satsflow.web.auth_helpers import current_creator
+from satsflow.storage.models import Donation, User
+from satsflow.web.auth_helpers import current_user
 from satsflow.web.templating import templates
 
 router = APIRouter()
@@ -45,10 +45,10 @@ def _donation_row(d: Donation) -> dict:
     }
 
 
-def _load(db: Database, creator: Creator) -> tuple[list[Donation], dict]:
-    if creator.id is None:
+def _load(db: Database, user: User) -> tuple[list[Donation], dict]:
+    if user.id is None:
         return [], {"btc": 0, "xmr": 0, "count": 0, "unread": 0}
-    donations = db.list_donations(creator.id, limit=50)
+    donations = db.list_donations(user.id, limit=50)
     btc_sats = sum(d.amount for d in donations if d.coin == "BTC")
     xmr_pico = sum(d.amount for d in donations if d.coin == "XMR")
     unread = sum(1 for d in donations if d.message)
@@ -62,31 +62,31 @@ def _load(db: Database, creator: Creator) -> tuple[list[Donation], dict]:
 
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    creator = current_creator(request)
-    if creator is None:
+    user = current_user(request)
+    if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
 
     db: Database = request.app.state.db
-    donations, totals = _load(db, creator)
+    donations, totals = _load(db, user)
 
-    fee_pct = fee_percent_for(creator.created_at, override=creator.fee_override)
+    fee_pct = fee_percent_for(user.created_at, override=user.fee_override)
     fee_ctx = {
         "percent": fee_pct,
         "display_percent": f"{fee_pct * 100:.1f}%",
-        "tier": tier_name(creator.created_at, override=creator.fee_override),
+        "tier": tier_name(user.created_at, override=user.fee_override),
         "days_until_drop": days_until_next_tier(
-            creator.created_at, override=creator.fee_override
+            user.created_at, override=user.fee_override
         ),
-        "balance_sats": creator.fee_balance_sats,
+        "balance_sats": user.fee_balance_sats,
     }
 
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
         context={
-            "creator": {
-                "slug": creator.slug,
-                "display_name": creator.display_name,
+            "user": {
+                "slug": user.slug,
+                "display_name": user.display_name,
             },
             "donations": [_donation_row(d) for d in donations],
             "totals": totals,
@@ -98,17 +98,17 @@ async def dashboard(request: Request):
 
 @router.get("/dashboard/export.csv")
 async def export_csv(request: Request):
-    """Stream the logged-in creator's donations as a CSV download."""
-    creator = current_creator(request)
-    if creator is None:
+    """Stream the logged-in user's donations as a CSV download."""
+    user = current_user(request)
+    if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
 
     db: Database = request.app.state.db
 
-    if creator.id is None:
+    if user.id is None:
         donations: list[Donation] = []
     else:
-        donations = db.list_donations(creator.id, limit=10_000)
+        donations = db.list_donations(user.id, limit=10_000)
 
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -133,7 +133,7 @@ async def export_csv(request: Request):
         ])
 
     buf.seek(0)
-    filename = f"satsflow-{creator.slug}-{datetime.now(UTC):%Y%m%d}.csv"
+    filename = f"satsflow-{user.slug}-{datetime.now(UTC):%Y%m%d}.csv"
     return StreamingResponse(
         iter([buf.getvalue()]),
         media_type="text/csv",
@@ -143,17 +143,17 @@ async def export_csv(request: Request):
 @router.get("/dashboard/settle", response_class=HTMLResponse)
 async def settle_page(request: Request):
     """Show the fee settlement invoice: platform address, QR, amount."""
-    creator = current_creator(request)
-    if creator is None:
+    user = current_user(request)
+    if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
 
-    if creator.fee_balance_sats <= 0:
+    if user.fee_balance_sats <= 0:
         return RedirectResponse(url="/dashboard", status_code=303)
 
     from satsflow import config
     from satsflow.web.qr import btc_uri, qr_svg_data_uri
 
-    dest = config.GNOME_BTC_ADDRESS or creator.btc_address or ""
+    dest = config.GNOME_BTC_ADDRESS or user.btc_address or ""
     if not dest:
         raise HTTPException(
             status_code=500,
@@ -161,7 +161,7 @@ async def settle_page(request: Request):
         )
 
     qr_data_uri = None
-    pay_uri = btc_uri(dest, creator.fee_balance_sats)
+    pay_uri = btc_uri(dest, user.fee_balance_sats)
     try:
         qr_data_uri = qr_svg_data_uri(pay_uri)
     except (ValueError, TypeError):
@@ -171,11 +171,11 @@ async def settle_page(request: Request):
         request=request,
         name="settle.html",
         context={
-            "creator": {
-                "slug": creator.slug,
-                "display_name": creator.display_name,
+            "user": {
+                "slug": user.slug,
+                "display_name": user.display_name,
             },
-            "balance_sats": creator.fee_balance_sats,
+            "balance_sats": user.fee_balance_sats,
             "address": dest,
             "qr_data_uri": qr_data_uri,
             "pay_uri": pay_uri,
@@ -186,13 +186,13 @@ async def settle_page(request: Request):
 
 @router.post("/dashboard/settle/confirm")
 async def settle_confirm(request: Request, txid: str = Form(...)):
-    """Creator pastes the txid they used to pay. We record and reset."""
-    creator = current_creator(request)
-    if creator is None:
+    """User pastes the txid they used to pay. We record and reset."""
+    user = current_user(request)
+    if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
 
-    if creator.id is None:
-        raise HTTPException(status_code=500, detail="creator id missing")
+    if user.id is None:
+        raise HTTPException(status_code=500, detail="user id missing")
 
     txid = txid.strip()
     if len(txid) < 10 or len(txid) > 128:
@@ -202,11 +202,11 @@ async def settle_confirm(request: Request, txid: str = Form(...)):
 
     from satsflow import config
     db.record_settlement(
-        creator.id,
-        creator.fee_balance_sats,
+        user.id,
+        user.fee_balance_sats,
         txid=txid,
         address=config.GNOME_BTC_ADDRESS or None,
     )
-    db.reset_fee_balance(creator.id)
+    db.reset_fee_balance(user.id)
 
     return RedirectResponse(url="/dashboard?settled=1", status_code=303)

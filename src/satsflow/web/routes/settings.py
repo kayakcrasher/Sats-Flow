@@ -1,4 +1,4 @@
-"""Creator settings: edit profile, change password, set xpub."""
+"""User settings: edit profile, change password, set xpub."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Form, Request
@@ -6,13 +6,13 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from satsflow.security.passwords import hash_password, verify_password
 from satsflow.storage.db import Database
-from satsflow.web.auth_helpers import current_creator
+from satsflow.web.auth_helpers import current_user
 from satsflow.web.templating import templates
 
 router = APIRouter()
 
 
-def _creator_ctx(c) -> dict:
+def _user_ctx(c) -> dict:
     return {
         "slug": c.slug,
         "display_name": c.display_name,
@@ -25,15 +25,15 @@ def _creator_ctx(c) -> dict:
 
 @router.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
-    creator = current_creator(request)
-    if creator is None:
+    user = current_user(request)
+    if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
 
     return templates.TemplateResponse(
         request=request,
         name="settings.html",
         context={
-            "creator": _creator_ctx(creator),
+            "user": _user_ctx(user),
             "active": "settings",
             "error": None,
         },
@@ -49,8 +49,8 @@ async def update_profile(
     xmr_address: str = Form(""),
     btc_xpub: str = Form(""),
 ):
-    creator = current_creator(request)
-    if creator is None:
+    user = current_user(request)
+    if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
 
     db: Database = request.app.state.db
@@ -66,8 +66,8 @@ async def update_profile(
                 request=request,
                 name="settings.html",
                 context={
-                    "creator": {
-                        "slug": creator.slug,
+                    "user": {
+                        "slug": user.slug,
                         "display_name": display_name.strip(),
                         "bio": bio.strip(),
                         "btc_address": btc_address.strip(),
@@ -81,7 +81,7 @@ async def update_profile(
             )
 
     db._conn.execute(
-        """UPDATE creators
+        """UPDATE users
            SET display_name = ?, bio = ?, btc_address = ?, xmr_address = ?, btc_xpub = ?
            WHERE id = ?""",
         (
@@ -90,7 +90,7 @@ async def update_profile(
             btc_address.strip() or None,
             xmr_address.strip() or None,
             xpub,
-            creator.id,
+            user.id,
         ),
     )
     db._conn.commit()
@@ -104,16 +104,16 @@ async def change_password(
     current_password: str = Form(...),
     new_password: str = Form(...),
 ):
-    creator = current_creator(request)
-    if creator is None:
+    user = current_user(request)
+    if user is None:
         return RedirectResponse(url="/auth/login", status_code=303)
 
-    if not creator.password_hash or not verify_password(creator.password_hash, current_password):
+    if not user.password_hash or not verify_password(user.password_hash, current_password):
         return templates.TemplateResponse(
             request=request,
             name="settings.html",
             context={
-                "creator": _creator_ctx(creator),
+                "user": _user_ctx(user),
                 "active": "settings",
                 "error": "Current password is incorrect.",
             },
@@ -125,7 +125,7 @@ async def change_password(
             request=request,
             name="settings.html",
             context={
-                "creator": _creator_ctx(creator),
+                "user": _user_ctx(user),
                 "active": "settings",
                 "error": "New password must be at least 8 characters.",
             },
@@ -134,8 +134,8 @@ async def change_password(
 
     db: Database = request.app.state.db
     db._conn.execute(
-        "UPDATE creators SET password_hash = ? WHERE id = ?",
-        (hash_password(new_password), creator.id),
+        "UPDATE users SET password_hash = ? WHERE id = ?",
+        (hash_password(new_password), user.id),
     )
     db._conn.commit()
 

@@ -1,4 +1,4 @@
-{% set me = session_creator(request) if request else None %}
+{% set me = session_user(request) if request else None %}
 <header class="site-nav">
     <div class="nav-inner">
         <a href="/" class="nav-brand">

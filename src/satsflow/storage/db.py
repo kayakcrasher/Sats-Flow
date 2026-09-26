@@ -117,6 +117,20 @@ def _migrate(conn: sqlite3.Connection) -> None:
         )
     if "fee_override" not in creator_cols:
         conn.execute("ALTER TABLE creators ADD COLUMN fee_override REAL")
+    if "fee_balance_sats" not in creator_cols:
+        conn.execute(
+            "ALTER TABLE creators ADD COLUMN fee_balance_sats INTEGER NOT NULL DEFAULT 0"
+        )
+    cur = conn.execute("PRAGMA table_info(donations)")
+    donation_cols = {row[1] for row in cur.fetchall()}
+    if "platform_fee_sats" not in donation_cols:
+        conn.execute(
+            "ALTER TABLE donations ADD COLUMN platform_fee_sats INTEGER NOT NULL DEFAULT 0"
+        )
+    if "fee_percent_at_creation" not in donation_cols:
+        conn.execute(
+            "ALTER TABLE donations ADD COLUMN fee_percent_at_creation REAL NOT NULL DEFAULT 0"
+        )
     conn.commit()
 
 

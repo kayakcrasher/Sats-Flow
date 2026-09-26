@@ -154,10 +154,21 @@ class TestAddressGeneration:
         assert a != b
         assert backend._next_index == 2
 
-    def test_xpub_path_raises_loudly(self, fake_session, monkeypatch):
-        monkeypatch.setattr("satsflow.config.BTC_XPUB", "xpub_fake", raising=False)
-        b = PublicAPIBackend(session=fake_session)
-        with pytest.raises(Exception, match="not yet implemented"):
+    def test_xpub_derives_real_address(self, fake_session):
+        # BIP84 test vector — same xpub used in tests/test_bip32.py
+        xpub = (
+            "zpub6rFR7y4Q2AijBEqTUquhVz398htDFrtymD9xYYfG1m4wAcvPhXNfE3EfH1r1ADqtfSdVC"
+            "ToUG868RvUUkgDKf31mGDtKsAYz2oz2AGutZYs"
+        )
+        b = PublicAPIBackend(session=fake_session, xpub=xpub)
+        addr0 = b.get_new_address("inv")
+        addr1 = b.get_new_address("inv")
+        assert addr0 == "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu"
+        assert addr1 == "bc1qnjg0jd8228aq7egyzacy8cys3knf9xvrerkf9g"
+
+    def test_invalid_xpub_raises(self, fake_session):
+        b = PublicAPIBackend(session=fake_session, xpub="not-a-real-xpub")
+        with pytest.raises(Exception, match="xpub derivation failed"):
             b.get_new_address("inv")
 
 

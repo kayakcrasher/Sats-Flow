@@ -87,8 +87,14 @@ class Bitcoin:
         result = btc.check(address, expected_sats=100_000)
     """
 
-    def __init__(self, backend: BitcoinBackend | None = None) -> None:
+    def __init__(
+        self,
+        backend: BitcoinBackend | None = None,
+        xpub: str | None = None,
+    ) -> None:
         self._backend = backend or _load_backend()
+        if xpub and hasattr(self._backend, "set_xpub"):
+            self._backend.set_xpub(xpub)  # type: ignore[attr-defined]
 
     @property
     def backend(self) -> BitcoinBackend:

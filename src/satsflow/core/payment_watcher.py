@@ -86,6 +86,20 @@ class PaymentWatcher:
         if not donation.address:
             raise WatchError(f"donation {donation_id} has no address")
 
+        # Dev placeholder addresses are not valid Bitcoin addresses.
+        # mempool.space returns 400 for them. Skip the network call.
+        if donation.address.startswith("bc1qdev"):
+            return WatchResult(
+                donation_id=donation_id,
+                coin=donation.coin,
+                status="not_found",
+                received=0,
+                expected=donation.amount,
+                confirmations=0,
+                txid=None,
+                is_final=False,
+            )
+
         backend = self._backend_for(donation.coin)
 
         try:

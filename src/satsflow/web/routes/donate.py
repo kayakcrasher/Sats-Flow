@@ -59,9 +59,21 @@ async def create_invoice(
             else:
                 amount_int = xmr_to_piconero(float(amount_crypto))
         elif amount_usd.strip():
-            # No price conversion wired yet — store USD only for now,
-            # use a placeholder crypto amount so the record is valid.
-            amount_int = 0
+            from satsflow.core.price import PriceFeed, PriceFeedError
+            try:
+                price = PriceFeed().usd(coin)
+            except PriceFeedError as exc:
+                raise HTTPException(
+                    status_code=502, detail=f"price feed unavailable: {exc}"
+                ) from None
+            usd_val = float(amount_usd)
+            if price <= 0:
+                raise ValueError("invalid price feed")
+            crypto_val = usd_val / price
+            if coin == "BTC":
+                amount_int = round(crypto_val * 100_000_000)
+            else:
+                amount_int = xmr_to_piconero(crypto_val)
         else:
             raise ValueError("no amount provided")
     except ValueError as exc:

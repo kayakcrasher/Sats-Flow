@@ -73,7 +73,8 @@ async def create_invoice(
     label = f"inv-{slug}-{secrets.token_hex(4)}"
     try:
         if coin == "BTC":
-            address = _load_btc().new_address(label)
+            btc = Bitcoin(xpub=creator.btc_xpub)
+            address = btc.new_address(label)
         else:
             address = _load_xmr().new_address(label)
     except (BitcoinError, MoneroError) as exc:

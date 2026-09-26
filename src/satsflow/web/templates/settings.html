@@ -45,6 +45,16 @@
                 <input type="text" class="input" name="xmr_address" value="{{ creator.xmr_address }}"
                        placeholder="4..." autocomplete="off">
             </label>
+
+            <label class="field">
+                <span class="field-label">Bitcoin xpub (watch-only)</span>
+                <input type="text" class="input mono" name="btc_xpub" value="{{ creator.btc_xpub }}"
+                       placeholder="zpub..." autocomplete="off" spellcheck="false">
+                <span class="field-hint">
+                    From your wallet (Sparrow, BlueWallet, Ledger). Watch-only — <strong>never</strong>
+                    paste your seed phrase. Fresh addresses are derived per donation.
+                </span>
+            </label>
             <button type="submit" class="btn btn-primary">Save profile</button>
         </form>
 

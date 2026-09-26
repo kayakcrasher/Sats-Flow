@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS creators (
     btc_xpub        TEXT,
     next_btc_index  INTEGER NOT NULL DEFAULT 0,
     fee_override    REAL,
+    fee_balance_sats INTEGER NOT NULL DEFAULT 0,
     password_hash   TEXT,
     created_at      INTEGER NOT NULL
 );
@@ -48,6 +49,8 @@ CREATE TABLE IF NOT EXISTS donations (
     message         TEXT,
     created_at      INTEGER NOT NULL,
     confirmed_at    INTEGER,
+    platform_fee_sats INTEGER NOT NULL DEFAULT 0,
+    fee_percent_at_creation REAL NOT NULL DEFAULT 0,
     pinned          INTEGER NOT NULL DEFAULT 0,
     read_at         INTEGER,
     FOREIGN KEY (creator_id) REFERENCES creators(id) ON DELETE CASCADE
@@ -77,6 +80,16 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);
+
+CREATE TABLE IF NOT EXISTS fee_settlements (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    creator_id      INTEGER NOT NULL,
+    amount_sats     INTEGER NOT NULL,
+    txid            TEXT NOT NULL,
+    address         TEXT,
+    created_at      INTEGER NOT NULL,
+    FOREIGN KEY (creator_id) REFERENCES creators(id) ON DELETE CASCADE
+);
 """
 
 
@@ -207,6 +220,7 @@ class Database:
             btc_xpub=row["btc_xpub"],
             next_btc_index=int(row["next_btc_index"] or 0),
             fee_override=row["fee_override"],
+            fee_balance_sats=int(row["fee_balance_sats"] or 0),
             password_hash=row["password_hash"],
             created_at=row["created_at"],
         )
@@ -224,6 +238,8 @@ class Database:
         donor_name: str | None = None,
         message: str | None = None,
         confirmed_at: int | None = None,
+        platform_fee_sats: int = 0,
+        fee_percent_at_creation: float = 0.0,
     ) -> Donation:
         if coin not in ("BTC", "XMR"):
             raise StorageError(f"unsupported coin: {coin}")
@@ -233,10 +249,12 @@ class Database:
         cur = self._conn.execute(
             """INSERT INTO donations
                (creator_id, coin, amount, usd_at_receipt, txid, address,
-                donor_name, message, created_at, confirmed_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                donor_name, message, created_at, confirmed_at,
+                platform_fee_sats, fee_percent_at_creation)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (creator_id, coin, amount, usd_at_receipt, txid, address,
-             donor_name, message, _now(), confirmed_at),
+             donor_name, message, _now(), confirmed_at,
+             platform_fee_sats, fee_percent_at_creation),
         )
         self._conn.commit()
         return self.get_donation(int(cur.lastrowid or 0))
@@ -298,6 +316,8 @@ class Database:
             message=row["message"],
             created_at=row["created_at"],
             confirmed_at=row["confirmed_at"],
+            platform_fee_sats=int(row["platform_fee_sats"] or 0),
+            fee_percent_at_creation=float(row["fee_percent_at_creation"] or 0.0),
             pinned=bool(row["pinned"]),
             read_at=row["read_at"],
         )
@@ -460,3 +480,49 @@ class Database:
         )
         self._conn.commit()
         return self.get_creator(creator_id)
+
+    def increment_fee_balance(self, creator_id: int, amount_sats: int) -> int:
+        """Add to the creator's fee balance. Returns the new balance."""
+        self._conn.execute(
+            "UPDATE creators SET fee_balance_sats = fee_balance_sats + ? WHERE id = ?",
+            (amount_sats, creator_id),
+        )
+        self._conn.commit()
+        row = self._conn.execute(
+            "SELECT fee_balance_sats FROM creators WHERE id = ?", (creator_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"creator {creator_id} not found")
+        return int(row["fee_balance_sats"] or 0)
+
+    def reset_fee_balance(self, creator_id: int) -> None:
+        self._conn.execute(
+            "UPDATE creators SET fee_balance_sats = 0 WHERE id = ?", (creator_id,)
+        )
+        self._conn.commit()
+
+    def record_settlement(
+        self,
+        creator_id: int,
+        amount_sats: int,
+        txid: str,
+        address: str | None = None,
+    ) -> int:
+        """Record a fee payment. Returns settlement id."""
+        cur = self._conn.execute(
+            """INSERT INTO fee_settlements
+               (creator_id, amount_sats, txid, address, created_at)
+               VALUES (?, ?, ?, ?, ?)""",
+            (creator_id, amount_sats, txid, address, _now()),
+        )
+        self._conn.commit()
+        if cur.lastrowid is None:
+            raise StorageError("insert did not return a rowid")
+        return int(cur.lastrowid)
+
+    def list_settlements(self, creator_id: int) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM fee_settlements WHERE creator_id = ? ORDER BY created_at DESC",
+            (creator_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]

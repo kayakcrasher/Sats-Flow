@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Settle fee balance — {{ creator.display_name }}{% endblock %}
+{% block content %}
+
+<section class="dash-head">
+    <div class="dash-inner">
+        <div>
+            <h1>Settle fee balance</h1>
+            <p class="muted small">Pay your accumulated platform fee to GNOMEFINANCE.</p>
+        </div>
+        <div class="dash-actions">
+            <a href="/dashboard" class="btn btn-ghost">Back to dashboard</a>
+        </div>
+    </div>
+</section>
+
+<section class="donate">
+    <div class="donate-inner">
+        <div class="donate-card">
+            <h2>Amount owed</h2>
+            <div class="mono" style="font-size:1.6rem; padding:8px 0; color: var(--accent);">
+                {{ "{:,}".format(balance_sats) }} sats
+            </div>
+
+            {% if qr_data_uri %}
+            <div class="field qr-block">
+                <span class="field-label">Scan with your wallet</span>
+                <img src="{{ qr_data_uri }}" alt="QR code" class="qr-image">
+                <span class="field-hint mono" style="word-break:break-all;">{{ pay_uri }}</span>
+            </div>
+            {% endif %}
+
+            <div class="field">
+                <span class="field-label">Send to</span>
+                <div class="input mono" style="word-break:break-all; padding:14px;">
+                    {{ address }}
+                </div>
+                <button type="button" class="btn btn-ghost btn-block"
+                        onclick="navigator.clipboard.writeText('{{ address }}'); this.textContent='Copied ✓';"
+                        style="margin-top:8px;">
+                    Copy address
+                </button>
+            </div>
+
+            <hr style="border:0; border-top:1px solid var(--border); margin:24px 0;">
+
+            <h3 style="font-size:1rem;">Already sent it?</h3>
+            <p class="muted small">Paste the transaction ID below to mark your balance as settled.</p>
+
+            <form method="post" action="/dashboard/settle/confirm">
+                <label class="field">
+                    <span class="field-label">Transaction ID (txid)</span>
+                    <input type="text" class="input mono" name="txid"
+                           placeholder="paste txid here" required
+                           minlength="10" maxlength="128" autocomplete="off" spellcheck="false">
+                </label>
+                <button type="submit" class="btn btn-primary btn-block">
+                    Mark as paid
+                </button>
+                <p class="muted tiny center" style="margin-top:8px;">
+                    We record the txid and reset your balance. Verification is trust-based for now.
+                </p>
+            </form>
+        </div>
+
+        <aside class="donate-aside">
+            <h3>Why settle</h3>
+            <ul class="check-list">
+                <li>Fees keep SatsFlow running and non-custodial</li>
+                <li>Your balance accumulates from confirmed donations only</li>
+                <li>Pay whenever it's convenient — no auto-charge</li>
+                <li>Every settlement is recorded for your records</li>
+            </ul>
+        </aside>
+    </div>
+</section>
+
+{% endblock %}

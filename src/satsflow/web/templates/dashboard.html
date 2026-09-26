@@ -17,8 +17,39 @@
     </div>
 </section>
 
+{% if request.query_params.get('settled') %}
+<section style="padding: 24px 0 0;">
+    <div class="dash-inner">
+        <div class="flash-success">Fee balance settled. Thank you!</div>
+    </div>
+</section>
+{% endif %}
+
 <section class="dash-stats">
     <div class="dash-inner">
+        <div class="stat-card stat-card-fee">
+            <span class="stat-label">Your fee</span>
+            <span class="stat-value big">{{ fee.display_percent }}</span>
+            <span class="stat-delta">
+                {{ fee.tier }} tier
+                {% if fee.days_until_drop %}
+                    · drops in {{ fee.days_until_drop }}d
+                {% else %}
+                    · permanent
+                {% endif %}
+            </span>
+        </div>
+        <div class="stat-card stat-card-fee">
+            <span class="stat-label">Fee balance owed</span>
+            <span class="stat-value big">{{ "{:,}".format(fee.balance_sats) }} sats</span>
+            <span class="stat-delta">
+                {% if fee.balance_sats > 0 %}
+                    <a href="/dashboard/settle">Settle up →</a>
+                {% else %}
+                    all settled
+                {% endif %}
+            </span>
+        </div>
         <div class="stat-card">
             <span class="stat-label">Total received (BTC)</span>
             <span class="stat-value big">{{ "%.8f"|format(totals.btc / 100000000) }} ₿</span>

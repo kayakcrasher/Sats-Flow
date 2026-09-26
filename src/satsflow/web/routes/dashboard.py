@@ -6,9 +6,14 @@ import io
 import time
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 
+from satsflow.core.fees import (
+    days_until_next_tier,
+    fee_percent_for,
+    tier_name,
+)
 from satsflow.storage.db import Database
 from satsflow.storage.models import Creator, Donation
 from satsflow.web.auth_helpers import current_creator
@@ -64,6 +69,17 @@ async def dashboard(request: Request):
     db: Database = request.app.state.db
     donations, totals = _load(db, creator)
 
+    fee_pct = fee_percent_for(creator.created_at, override=creator.fee_override)
+    fee_ctx = {
+        "percent": fee_pct,
+        "display_percent": f"{fee_pct * 100:.1f}%",
+        "tier": tier_name(creator.created_at, override=creator.fee_override),
+        "days_until_drop": days_until_next_tier(
+            creator.created_at, override=creator.fee_override
+        ),
+        "balance_sats": creator.fee_balance_sats,
+    }
+
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
@@ -74,6 +90,7 @@ async def dashboard(request: Request):
             },
             "donations": [_donation_row(d) for d in donations],
             "totals": totals,
+            "fee": fee_ctx,
             "active": "dashboard",
         },
     )
@@ -122,3 +139,74 @@ async def export_csv(request: Request):
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+@router.get("/dashboard/settle", response_class=HTMLResponse)
+async def settle_page(request: Request):
+    """Show the fee settlement invoice: platform address, QR, amount."""
+    creator = current_creator(request)
+    if creator is None:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    if creator.fee_balance_sats <= 0:
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    from satsflow import config
+    from satsflow.web.qr import btc_uri, qr_svg_data_uri
+
+    dest = config.GNOME_BTC_ADDRESS or creator.btc_address or ""
+    if not dest:
+        raise HTTPException(
+            status_code=500,
+            detail="No platform BTC address configured. Set SATFLOW_GNOME_BTC_ADDRESS.",
+        )
+
+    qr_data_uri = None
+    pay_uri = btc_uri(dest, creator.fee_balance_sats)
+    try:
+        qr_data_uri = qr_svg_data_uri(pay_uri)
+    except (ValueError, TypeError):
+        qr_data_uri = None
+
+    return templates.TemplateResponse(
+        request=request,
+        name="settle.html",
+        context={
+            "creator": {
+                "slug": creator.slug,
+                "display_name": creator.display_name,
+            },
+            "balance_sats": creator.fee_balance_sats,
+            "address": dest,
+            "qr_data_uri": qr_data_uri,
+            "pay_uri": pay_uri,
+            "active": "dashboard",
+        },
+    )
+
+
+@router.post("/dashboard/settle/confirm")
+async def settle_confirm(request: Request, txid: str = Form(...)):
+    """Creator pastes the txid they used to pay. We record and reset."""
+    creator = current_creator(request)
+    if creator is None:
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    if creator.id is None:
+        raise HTTPException(status_code=500, detail="creator id missing")
+
+    txid = txid.strip()
+    if len(txid) < 10 or len(txid) > 128:
+        raise HTTPException(status_code=400, detail="Invalid txid")
+
+    db: Database = request.app.state.db
+
+    from satsflow import config
+    db.record_settlement(
+        creator.id,
+        creator.fee_balance_sats,
+        txid=txid,
+        address=config.GNOME_BTC_ADDRESS or None,
+    )
+    db.reset_fee_balance(creator.id)
+
+    return RedirectResponse(url="/dashboard?settled=1", status_code=303)

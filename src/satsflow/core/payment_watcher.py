@@ -96,7 +96,13 @@ class PaymentWatcher:
         normalized = self._normalize(raw, donation)
 
         if normalized.is_final:
-            self._db.confirm_donation(donation_id, txid=normalized.txid)
+            confirmed = self._db.confirm_donation(donation_id, txid=normalized.txid)
+            # Only credit the fee balance once — check if this donation
+            # was already confirmed before this call.
+            if donation.confirmed_at is None and confirmed.platform_fee_sats > 0:
+                self._db.increment_fee_balance(
+                    confirmed.creator_id, confirmed.platform_fee_sats
+                )
 
         return normalized
 

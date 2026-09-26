@@ -7,6 +7,7 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from satsflow.core.bitcoin import Bitcoin, BitcoinError
+from satsflow.core.fees import fee_percent_for
 from satsflow.core.monero import Monero, MoneroError, xmr_to_piconero
 from satsflow.core.payment_watcher import PaymentWatcher, WatchError
 from satsflow.storage.db import Database, NotFoundError
@@ -80,6 +81,10 @@ async def create_invoice(
     except (BitcoinError, MoneroError) as exc:
         raise HTTPException(status_code=502, detail=f"address generation failed: {exc}") from None
 
+    # Snapshot the creator's fee percent at the moment of donation.
+    fee_pct = fee_percent_for(creator.created_at, override=creator.fee_override)
+    platform_fee = int(amount_int * fee_pct)
+
     donation = db.create_donation(
         creator_id=creator.id,
         coin=coin,
@@ -88,6 +93,8 @@ async def create_invoice(
         address=address,
         donor_name=(display_name.strip() or None),
         message=(message.strip() or None),
+        platform_fee_sats=platform_fee,
+        fee_percent_at_creation=fee_pct,
     )
 
     return RedirectResponse(url=f"/c/{slug}/invoice/{donation.id}", status_code=303)

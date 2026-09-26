@@ -16,6 +16,7 @@ class Creator:
     btc_xpub: str | None
     next_btc_index: int
     fee_override: float | None
+    fee_balance_sats: int
     password_hash: str | None
     created_at: int
 
@@ -33,6 +34,8 @@ class Donation:
     message: str | None
     created_at: int
     confirmed_at: int | None
+    platform_fee_sats: int = 0
+    fee_percent_at_creation: float = 0.0
     pinned: bool = False
     read_at: int | None = None
 

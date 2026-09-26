@@ -13,6 +13,9 @@ class Creator:
     bio: str
     btc_address: str | None
     xmr_address: str | None
+    btc_xpub: str | None
+    next_btc_index: int
+    fee_override: float | None
     password_hash: str | None
     created_at: int
 

@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS creators (
     bio             TEXT NOT NULL DEFAULT '',
     btc_address     TEXT,
     xmr_address     TEXT,
+    btc_xpub        TEXT,
+    next_btc_index  INTEGER NOT NULL DEFAULT 0,
+    fee_override    REAL,
     password_hash   TEXT,
     created_at      INTEGER NOT NULL
 );
@@ -90,6 +93,17 @@ def _migrate(conn: sqlite3.Connection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_donations_pinned "
         "ON donations(creator_id, pinned DESC, created_at DESC)"
     )
+    # Creator columns added for per-creator xpub + fee override
+    cur = conn.execute("PRAGMA table_info(creators)")
+    creator_cols = {row[1] for row in cur.fetchall()}
+    if "btc_xpub" not in creator_cols:
+        conn.execute("ALTER TABLE creators ADD COLUMN btc_xpub TEXT")
+    if "next_btc_index" not in creator_cols:
+        conn.execute(
+            "ALTER TABLE creators ADD COLUMN next_btc_index INTEGER NOT NULL DEFAULT 0"
+        )
+    if "fee_override" not in creator_cols:
+        conn.execute("ALTER TABLE creators ADD COLUMN fee_override REAL")
     conn.commit()
 
 
@@ -190,6 +204,9 @@ class Database:
             bio=row["bio"],
             btc_address=row["btc_address"],
             xmr_address=row["xmr_address"],
+            btc_xpub=row["btc_xpub"],
+            next_btc_index=int(row["next_btc_index"] or 0),
+            fee_override=row["fee_override"],
             password_hash=row["password_hash"],
             created_at=row["created_at"],
         )
@@ -407,3 +424,39 @@ class Database:
             (creator_id,),
         ).fetchone()
         return int(row["n"]) if row else 0
+
+    def set_creator_xpub(self, creator_id: int, xpub: str | None) -> Creator:
+        """Set or clear a creator's BTC xpub (watch-only)."""
+        self._conn.execute(
+            "UPDATE creators SET btc_xpub = ? WHERE id = ?",
+            (xpub, creator_id),
+        )
+        self._conn.commit()
+        return self.get_creator(creator_id)
+
+    def bump_btc_index(self, creator_id: int) -> int:
+        """Atomically reserve the next BTC derivation index. Returns the used one."""
+        cur = self._conn.execute(
+            "SELECT next_btc_index FROM creators WHERE id = ?", (creator_id,)
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise NotFoundError(f"creator {creator_id} not found")
+        used = int(row["next_btc_index"] or 0)
+        self._conn.execute(
+            "UPDATE creators SET next_btc_index = ? WHERE id = ?",
+            (used + 1, creator_id),
+        )
+        self._conn.commit()
+        return used
+
+    def set_fee_override(self, creator_id: int, override: float | None) -> Creator:
+        """Set a fee override (e.g. 0.01 for Friends of the Dev). NULL clears it."""
+        if override is not None and not (0.0 <= override < 1.0):
+            raise StorageError(f"fee_override out of range: {override}")
+        self._conn.execute(
+            "UPDATE creators SET fee_override = ? WHERE id = ?",
+            (override, creator_id),
+        )
+        self._conn.commit()
+        return self.get_creator(creator_id)

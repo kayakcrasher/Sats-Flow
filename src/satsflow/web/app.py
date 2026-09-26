@@ -9,6 +9,7 @@ from satsflow.storage.db import Database
 from satsflow.storage.seed import seed_demo
 from satsflow.web.routes import (
     auth,
+    creator,
     dashboard,
     donate,
     explore,
@@ -16,7 +17,6 @@ from satsflow.web.routes import (
     live,
     price,
     settings,
-    creator,
 )
 from satsflow.web.templating import STATIC_DIR
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 import time
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from satsflow.storage.db import Database, NotFoundError
 from satsflow.storage.models import Donation
@@ -35,6 +35,12 @@ def _donation_to_feed(d: Donation) -> dict:
     }
 
 
+@router.get("")
+@router.get("/")
+async def creator_root() -> Response:
+    return RedirectResponse(url="/explore", status_code=303)
+
+
 @router.get("/{slug}", response_class=HTMLResponse)
 async def user_page(request: Request, slug: str) -> HTMLResponse:
     db: Database = request.app.state.db
@@ -63,8 +69,9 @@ async def user_page(request: Request, slug: str) -> HTMLResponse:
 
     return templates.TemplateResponse(
         request=request,
-        name="user.html",
+        name="creator.html",
         context={
+            "creator": user_ctx,
             "user": user_ctx,
             "feed": [_donation_to_feed(d) for d in donations],
             "active": "user",

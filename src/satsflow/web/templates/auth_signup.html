@@ -24,11 +24,13 @@
                 <input type="text" class="input" name="display_name" placeholder="Your Name" required maxlength="80">
             </label>
 
+            {% if role == "creator" %}
             <label class="field">
                 <span class="field-label">Bio <span class="muted">· optional</span></span>
                 <textarea class="textarea" name="bio" maxlength="280"
                           placeholder="What are you raising funds for?"></textarea>
             </label>
+            {% endif %}
 
             <label class="field">
                 <span class="field-label">Password</span>
@@ -36,6 +38,7 @@
                 <span class="field-hint">Minimum 8 characters. Hashed with Argon2id before storage.</span>
             </label>
 
+            {% if role == "creator" %}
             <label class="field">
                 <span class="field-label">Bitcoin address <span class="muted">· optional</span></span>
                 <input type="text" class="input" name="btc_address" placeholder="bc1q..." autocomplete="off">
@@ -45,8 +48,11 @@
                 <span class="field-label">Monero address <span class="muted">· optional</span></span>
                 <input type="text" class="input" name="xmr_address" placeholder="4..." autocomplete="off">
             </label>
+            {% endif %}
 
-            <button type="submit" class="btn btn-primary btn-block">Create my page</button>
+            <button type="submit" class="btn btn-primary btn-block">
+                {% if role == "creator" %}Create my page{% else %}Create my account{% endif %}
+            </button>
         </form>
 
         <p class="muted small center" style="margin-top: 16px;">

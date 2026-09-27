@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Join SatsFlow{% endblock %}
+{% block content %}
+
+<section class="join-hero">
+    <div class="join-inner">
+        <h1>Join SatsFlow</h1>
+        <p class="hero-sub">Two ways in. Pick what fits.</p>
+    </div>
+</section>
+
+<section class="join-body">
+    <div class="join-inner">
+        <div class="join-grid">
+
+            <a href="/auth/signup?role=creator" class="join-card join-card-creator">
+                <div class="join-icon">₿</div>
+                <h2>Raise funds</h2>
+                <p>Get a public page. Accept Bitcoin and Monero directly — no custodial wallet, no middleman.</p>
+                <ul class="check-list">
+                    <li>Your own donation page at <code>/c/yourname</code></li>
+                    <li>Watch-only wallet integration (we never hold funds)</li>
+                    <li>Live superchat wall for streams</li>
+                    <li>Fees drop from 3.5% → 2% as you grow</li>
+                    <li>You can donate too, obviously</li>
+                </ul>
+                <span class="btn btn-primary btn-block">Start raising →</span>
+            </a>
+
+            <a href="/auth/signup?role=donor" class="join-card join-card-donor">
+                <div class="join-icon">✎</div>
+                <h2>Just donate</h2>
+                <p>Support creators you love. Leave a message. Track what you've given.</p>
+                <ul class="check-list">
+                    <li>No public page</li>
+                    <li>Save your name and history</li>
+                    <li>Faster repeat donations</li>
+                    <li>Sign in once, donate anywhere</li>
+                    <li>Upgrade to a creator page anytime</li>
+                </ul>
+                <span class="btn btn-ghost btn-block">Create account →</span>
+            </a>
+
+        </div>
+        <p class="muted small center" style="margin-top: 32px;">
+            Already have an account? <a href="/auth/login">Log in</a>
+        </p>
+    </div>
+</section>
+
+{% endblock %}

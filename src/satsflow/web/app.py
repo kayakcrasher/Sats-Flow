@@ -13,6 +13,7 @@ from satsflow.web.routes import (
     dashboard,
     donate,
     explore,
+    join,
     landing,
     live,
     price,
@@ -43,6 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(dashboard.router)
     app.include_router(live.router)
     app.include_router(explore.router)
+    app.include_router(join.router)
     app.include_router(settings.router)
     app.include_router(price.router)
 

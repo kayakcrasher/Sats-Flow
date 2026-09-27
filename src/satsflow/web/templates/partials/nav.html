@@ -12,13 +12,18 @@
             <a href="/c/kayakcrasher/live">Live</a>
             <a href="/dashboard" class="{% if active == 'dashboard' %}is-active{% endif %}">Dashboard</a>
             {% if me %}
+            {% if me.is_creator %}
+            <a href="/dashboard" class="{% if active == 'dashboard' %}is-active{% endif %}">Dashboard</a>
+            {% else %}
+            <a href="/me" class="{% if active == 'me' %}is-active{% endif %}">My account</a>
+            {% endif %}
             <a href="/settings" class="{% if active == 'settings' %}is-active{% endif %}">Settings</a>
             <form method="post" action="/auth/logout" style="display:inline;">
                 <button type="submit" class="nav-link-btn">Log out</button>
             </form>
             {% else %}
             <a href="/auth/login" class="{% if active == 'login' %}is-active{% endif %}">Log in</a>
-            <a href="/auth/signup" class="nav-cta">Sign up</a>
+            <a href="/join" class="nav-cta">Join</a>
             {% endif %}
         </nav>
         <button class="theme-toggle" type="button">

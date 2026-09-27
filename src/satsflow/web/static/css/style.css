@@ -642,3 +642,62 @@ code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
     background: linear-gradient(180deg, var(--accent-soft), transparent 70%), var(--bg-elev);
 }
 .stat-card-fee .stat-value.big { color: var(--accent); }
+
+/* Join / fork page */
+.join-hero {
+    padding: 72px 0 24px;
+    text-align: center;
+}
+.join-hero h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px; }
+.join-body { padding: 24px 0 96px; }
+.join-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+.join-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+.join-card {
+    display: block;
+    padding: 32px;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    color: var(--text);
+    transition: all 0.2s ease;
+}
+.join-card:hover {
+    color: var(--text);
+    transform: translateY(-3px);
+    border-color: var(--accent);
+}
+.join-card-creator {
+    background: linear-gradient(180deg, var(--accent-soft), transparent 60%), var(--bg-elev);
+    border-color: rgba(247, 147, 26, 0.35);
+}
+.join-card-donor { border-color: var(--border); }
+.join-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 48px; height: 48px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+.join-card h2 { font-size: 1.4rem; margin: 0 0 8px; }
+.join-card > p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px; }
+.join-card .check-list { margin-bottom: 24px; }
+.join-card .btn { margin-top: auto; }
+.join-card code {
+    background: var(--bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.85em;
+}

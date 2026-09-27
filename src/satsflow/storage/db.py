@@ -185,15 +185,16 @@ class Database:
         btc_address: str | None = None,
         xmr_address: str | None = None,
         password_hash: str | None = None,
+        is_creator: bool = True,
     ) -> User:
         try:
             cur = self._conn.execute(
                 """INSERT INTO users
                    (slug, display_name, bio, btc_address, xmr_address,
-                    password_hash, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    password_hash, is_creator, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                 (slug, display_name, bio, btc_address, xmr_address,
-                 password_hash, _now()),
+                 password_hash, 1 if is_creator else 0, _now()),
             )
             self._conn.commit()
         except sqlite3.IntegrityError as exc:

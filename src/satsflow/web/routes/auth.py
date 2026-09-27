@@ -22,11 +22,13 @@ def _flash(request: Request, message: str) -> None:
 
 
 @router.get("/signup", response_class=HTMLResponse)
-async def signup_form(request: Request) -> HTMLResponse:
+async def signup_form(request: Request, role: str = "creator") -> HTMLResponse:
+    if role not in ("creator", "donor"):
+        role = "creator"
     return templates.TemplateResponse(
         request=request,
         name="auth_signup.html",
-        context={"active": "signup", "error": None},
+        context={"active": "signup", "error": None, "role": role},
     )
 
 
@@ -39,6 +41,7 @@ async def signup(
     password: str = Form(...),
     btc_address: str = Form(""),
     xmr_address: str = Form(""),
+    role: str = Form("creator"),
 ) -> Response:
     db: Database = request.app.state.db
 
@@ -60,7 +63,7 @@ async def signup(
         return templates.TemplateResponse(
             request=request,
             name="auth_signup.html",
-            context={"active": "signup", "error": "Password must be at least 8 characters."},
+            context={"active": "signup", "role": role, "error": "Password must be at least 8 characters."},
             status_code=400,
         )
 
@@ -68,24 +71,27 @@ async def signup(
         return templates.TemplateResponse(
             request=request,
             name="auth_signup.html",
-            context={"active": "signup", "error": "Display name is required."},
+            context={"active": "signup", "role": role, "error": "Display name is required."},
             status_code=400,
         )
+
+    is_creator = role == "creator"
 
     try:
         user = db.create_user(
             slug=slug,
             display_name=display_name,
-            bio=bio.strip(),
+            bio=bio.strip() if is_creator else "",
             btc_address=btc_address.strip() or None,
             xmr_address=xmr_address.strip() or None,
             password_hash=hash_password(password),
+            is_creator=is_creator,
         )
     except DuplicateError:
         return templates.TemplateResponse(
             request=request,
             name="auth_signup.html",
-            context={"active": "signup", "error": f"Slug '{slug}' is already taken."},
+            context={"active": "signup", "role": role, "error": f"Slug '{slug}' is already taken."},
             status_code=400,
         )
 
@@ -95,7 +101,8 @@ async def signup(
     token = new_token()
     db.create_session(user.id, token)
 
-    resp = RedirectResponse(url=f"/c/{user.slug}", status_code=303)
+    target = f"/c/{user.slug}" if is_creator else "/me"
+    resp = RedirectResponse(url=target, status_code=303)
     resp.set_cookie(value=token, **cookie_kwargs())
     return resp
 

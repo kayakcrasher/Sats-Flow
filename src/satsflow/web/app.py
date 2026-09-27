@@ -16,6 +16,7 @@ from satsflow.web.routes import (
     join,
     landing,
     live,
+    me,
     price,
     settings,
 )
@@ -38,6 +39,7 @@ def create_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
     app.include_router(landing.router)
+    app.include_router(me.router)
     app.include_router(auth.router)
     app.include_router(creator.router)
     app.include_router(donate.router)

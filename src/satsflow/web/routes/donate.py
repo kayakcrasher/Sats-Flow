@@ -10,7 +10,7 @@ from satsflow.core.bitcoin import Bitcoin, BitcoinError
 from satsflow.core.fees import fee_percent_for
 from satsflow.core.monero import Monero, MoneroError, xmr_to_piconero
 from satsflow.core.payment_watcher import PaymentWatcher, WatchError
-from satsflow.storage.db import Database, NotFoundError
+from satsflow.storage.db import Database, NotFoundError, current_user
 from satsflow.web.qr import btc_uri, qr_svg_data_uri, xmr_uri
 from satsflow.web.templating import templates
 
@@ -97,6 +97,10 @@ async def create_invoice(
     fee_pct = fee_percent_for(user.created_at, override=user.fee_override)
     platform_fee = int(amount_int * fee_pct)
 
+    # Link donation to logged-in donor if there is one
+    donor = current_user(request)
+    donor_user_id = donor.id if donor and donor.id else None
+
     donation = db.create_donation(
         user_id=user.id,
         coin=coin,
@@ -107,6 +111,7 @@ async def create_invoice(
         message=(message.strip() or None),
         platform_fee_sats=platform_fee,
         fee_percent_at_creation=fee_pct,
+        donor_user_id=donor_user_id,
     )
 
     return RedirectResponse(url=f"/c/{slug}/invoice/{donation.id}", status_code=303)

@@ -37,6 +37,7 @@ class Donation:
     confirmed_at: int | None
     platform_fee_sats: int = 0
     fee_percent_at_creation: float = 0.0
+    donor_user_id: int | None = None
     pinned: bool = False
     read_at: int | None = None
 

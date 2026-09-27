@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS donations (
     confirmed_at    INTEGER,
     platform_fee_sats INTEGER NOT NULL DEFAULT 0,
     fee_percent_at_creation REAL NOT NULL DEFAULT 0,
+    donor_user_id   INTEGER,
     pinned          INTEGER NOT NULL DEFAULT 0,
     read_at         INTEGER,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -132,6 +133,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
         conn.execute(
             "ALTER TABLE donations ADD COLUMN fee_percent_at_creation REAL NOT NULL DEFAULT 0"
         )
+    if "donor_user_id" not in donation_cols:
+        conn.execute("ALTER TABLE donations ADD COLUMN donor_user_id INTEGER")
     conn.commit()
 
 
@@ -257,6 +260,7 @@ class Database:
         confirmed_at: int | None = None,
         platform_fee_sats: int = 0,
         fee_percent_at_creation: float = 0.0,
+        donor_user_id: int | None = None,
     ) -> Donation:
         if coin not in ("BTC", "XMR"):
             raise StorageError(f"unsupported coin: {coin}")
@@ -267,11 +271,11 @@ class Database:
             """INSERT INTO donations
                (user_id, coin, amount, usd_at_receipt, txid, address,
                 donor_name, message, created_at, confirmed_at,
-                platform_fee_sats, fee_percent_at_creation)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                platform_fee_sats, fee_percent_at_creation, donor_user_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (user_id, coin, amount, usd_at_receipt, txid, address,
              donor_name, message, _now(), confirmed_at,
-             platform_fee_sats, fee_percent_at_creation),
+             platform_fee_sats, fee_percent_at_creation, donor_user_id),
         )
         self._conn.commit()
         return self.get_donation(int(cur.lastrowid or 0))
@@ -335,6 +339,7 @@ class Database:
             confirmed_at=row["confirmed_at"],
             platform_fee_sats=int(row["platform_fee_sats"] or 0),
             fee_percent_at_creation=float(row["fee_percent_at_creation"] or 0.0),
+            donor_user_id=row["donor_user_id"],
             pinned=bool(row["pinned"]),
             read_at=row["read_at"],
         )
@@ -543,3 +548,16 @@ class Database:
             (user_id,),
         ).fetchall()
         return [dict(r) for r in rows]
+
+    def list_donations_by_donor(
+        self, donor_user_id: int, limit: int = 50
+    ) -> list[Donation]:
+        """All donations made by a given donor, newest first."""
+        rows = self._conn.execute(
+            """SELECT * FROM donations
+               WHERE donor_user_id = ?
+               ORDER BY created_at DESC, id DESC
+               LIMIT ?""",
+            (donor_user_id, limit),
+        ).fetchall()
+        return [self._row_to_donation(r) for r in rows]

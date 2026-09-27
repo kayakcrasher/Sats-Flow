@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}My account — SatsFlow{% endblock %}
+{% block content %}
+
+<section class="dash-head">
+    <div class="dash-inner">
+        <div>
+            <h1>Hi, {{ user.display_name }}</h1>
+            <p class="muted small">Your donation history on SatsFlow.</p>
+        </div>
+        <div class="dash-actions">
+            <a href="/explore" class="btn btn-ghost">Explore creators</a>
+            {% if not user.is_creator %}
+            <a href="/settings" class="btn btn-ghost">Settings</a>
+            <a href="/join" class="btn btn-primary">Start raising funds</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<section class="dash-stats">
+    <div class="dash-inner">
+        <div class="stat-card">
+            <span class="stat-label">Total donated</span>
+            <span class="stat-value big">${{ "%.2f"|format(totals.usd) }}</span>
+            <span class="stat-delta">across all creators</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Donations</span>
+            <span class="stat-value big">{{ totals.count }}</span>
+            <span class="stat-delta">all-time</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Bitcoin given</span>
+            <span class="stat-value big">{{ "%.8f"|format(totals.btc_sats / 100000000) }} ₿</span>
+            <span class="stat-delta">on-chain</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Monero given</span>
+            <span class="stat-value big">{{ "%.4f"|format(totals.xmr_piconero / 1000000000000) }} ɱ</span>
+            <span class="stat-delta">on-chain</span>
+        </div>
+    </div>
+</section>
+
+<section class="dash-table">
+    <div class="dash-inner">
+        <h2>Your donations</h2>
+        {% if donations %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>To</th>
+                        <th>Message</th>
+                        <th>Coin</th>
+                        <th class="num">Amount</th>
+                        <th class="num">USD</th>
+                        <th>When</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in donations %}
+                    <tr>
+                        <td>
+                            {% if d.recipient_slug %}
+                            <a href="/c/{{ d.recipient_slug }}">{{ d.recipient_name }}</a>
+                            {% else %}
+                            <span class="muted">{{ d.recipient_name }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="msg-cell">
+                            {% if d.message %}
+                                <span class="msg-preview">{{ d.message }}</span>
+                            {% else %}
+                                <span class="muted tiny">—</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="coin-pill">{{ d.coin }}</span></td>
+                        <td class="num mono">
+                            {% if d.coin == "BTC" %}
+                                {{ "%.8f"|format(d.amount / 100000000) }} ₿
+                            {% else %}
+                                {{ "%.4f"|format(d.amount / 1000000000000) }} ɱ
+                            {% endif %}
+                        </td>
+                        <td class="num mono">${{ "%.2f"|format(d.usd or 0) }}</td>
+                        <td class="muted small">{{ d.age }}</td>
+                        <td>
+                            {% if d.confirmed %}
+                            <span class="live-badge is-confirmed">confirmed</span>
+                            {% else %}
+                            <span class="live-badge is-pending">pending</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="dash-empty">
+            <p class="muted">No donations yet.</p>
+            <p class="muted small">Find a creator to support at <a href="/explore">Explore</a>.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}

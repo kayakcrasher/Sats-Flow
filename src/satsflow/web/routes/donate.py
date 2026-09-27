@@ -10,7 +10,8 @@ from satsflow.core.bitcoin import Bitcoin, BitcoinError
 from satsflow.core.fees import fee_percent_for
 from satsflow.core.monero import Monero, MoneroError, xmr_to_piconero
 from satsflow.core.payment_watcher import PaymentWatcher, WatchError
-from satsflow.storage.db import Database, NotFoundError, current_user
+from satsflow.storage.db import Database, NotFoundError
+from satsflow.web.auth_helpers import current_user
 from satsflow.web.qr import btc_uri, qr_svg_data_uri, xmr_uri
 from satsflow.web.templating import templates
 
